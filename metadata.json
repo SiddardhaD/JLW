@@ -1,0 +1,6 @@
+{
+  "name": "JLW Approvals",
+  "description": "Secure enterprise order approvals app for JLW.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

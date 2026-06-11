@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Mint Green Circle Seal -->
+    <path
+        android:fillColor="#29F594"
+        android:pathData="M54,24C37.4,24 24,37.4 24,54C24,70.6 37.4,84 54,84C70.6,84 84,70.6 84,54C84,37.4 70.6,24 54,24ZM54,78C40.8,78 30,67.2 30,54C30,40.8 40.8,30 54,30C67.2,30 78,40.8 78,54C78,67.2 67.2,78 54,78Z" />
+    <!-- White brand checkmark -->
+    <path
+        android:fillColor="#EAF1F8"
+        android:pathData="M48,62L36,50L40.2,45.8L48,53.6L67.8,33.8L72,38L48,62Z" />
+</vector>
