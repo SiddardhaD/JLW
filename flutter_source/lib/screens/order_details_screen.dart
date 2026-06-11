@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../constants.dart';
 import '../models/order.dart';
 import '../providers/approvals_provider.dart';
+import '../widgets/order_document_section.dart';
 import 'package:intl/intl.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
@@ -24,8 +25,19 @@ class OrderDetailsScreen extends StatelessWidget {
     if (order == null) {
       return Scaffold(
         backgroundColor: JLWColors.darkBg,
+        appBar: AppBar(
+          backgroundColor: JLWColors.darkBg,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: JLWColors.mintAccent),
+            onPressed: onBack,
+          ),
+        ),
         body: const Center(
-          child: CircularProgressIndicator(color: JLWColors.mintAccent),
+          child: Text(
+            'Order not found',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       );
     }
@@ -35,266 +47,268 @@ class OrderDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: JLWColors.darkBg,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: JLWColors.mintAccent),
           onPressed: onBack,
         ),
         title: Text(
-          "Order No: $orderId",
+          'Order No: $orderId',
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: JLWColors.mintAccent),
+            icon: const Icon(Icons.close, color: Colors.white70),
             onPressed: onBack,
-          )
+          ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                children: [
-                  // Section 1: ORDER SUMMARY Card
-                  _buildOrderSummaryCard(order),
-
-                  const SizedBox(height: 24),
-
-                  // Section 2: Line Items Title Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Line Items",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              children: [
+                _buildOrderSummaryCard(order),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Line Items',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: JLWColors.mintAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: JLWColors.mintAccent.withValues(alpha: 0.3),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: JLWColors.inputBg,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: JLWColors.borderColor),
-                        ),
-                        child: Text(
-                          "${lineItems.length} Items",
-                          style: const TextStyle(
-                            color: JLWColors.mintAccent,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      child: Text(
+                        '${lineItems.length} Items',
+                        style: const TextStyle(
+                          color: JLWColors.mintAccent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Section 3: Line Items Listing Card Block
-                  ...lineItems.map((item) => _buildLineItemCard(item)),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...lineItems.map(_buildLineItemCard),
+                OrderDocumentSection(
+                  order: order,
+                  lineItems: lineItems,
+                ),
+              ],
             ),
-
-            // Persistent Decision Bottom Panel
-            _buildDecisionTray(context, order, provider),
-          ],
-        ),
+          ),
+          _buildDecisionTray(context, order, provider),
+        ],
       ),
     );
   }
 
   Widget _buildOrderSummaryCard(OrderModel order) {
+    final supplierName = order.id == '2323135'
+        ? "James O' Malley Global Sourcing Ltd."
+        : order.supplierName;
+    final orderDate =
+        order.id == '2323135' ? '10-OCT-2026' : order.orderDate;
+
     return Container(
       decoration: BoxDecoration(
         color: JLWColors.cardBg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: JLWColors.borderColor),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header title
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
             child: Text(
-              "ORDER SUMMARY",
+              'ORDER SUMMARY',
               style: TextStyle(
                 color: JLWColors.mintAccent,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
               ),
             ),
           ),
           const Divider(color: JLWColors.borderColor, height: 1),
+          _summaryGridRow(
+            leftLabel: 'ORIGINATOR',
+            leftValue: order.originator,
+            rightLabel: 'RESPONSIBLE PARTY',
+            rightValue: order.responsible,
+            bottomBorder: true,
+          ),
+          _summaryFullRow('PROJECT ID', order.projectIdFull, bottomBorder: true),
+          _summaryGridRow(
+            leftLabel: 'CO NUMBER',
+            leftValue: order.coNumber,
+            rightLabel: 'ORDER DATE',
+            rightValue: orderDate,
+            bottomBorder: true,
+          ),
+          _summaryStatusRow(order.status),
+          _summaryFullRow(
+            'SUPPLIER NAME',
+            supplierName,
+            valueColor: JLWColors.mintAccent,
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Originator and Responsible Party split row
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      border: Border(right: BorderSide(color: JLWColors.borderColor)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("ORIGINATOR", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(order.originator, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("RESPONSIBLE PARTY", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(order.responsible, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+  Widget _summaryGridRow({
+    required String leftLabel,
+    required String leftValue,
+    required String rightLabel,
+    required String rightValue,
+    bool bottomBorder = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: bottomBorder
+            ? const Border(bottom: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _summaryCell(leftLabel, leftValue, rightBorder: true)),
+          Expanded(child: _summaryCell(rightLabel, rightValue)),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryFullRow(
+    String label,
+    String value, {
+    bool bottomBorder = false,
+    Color valueColor = Colors.white,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: bottomBorder
+            ? const Border(bottom: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: _summaryCell(label, value, valueColor: valueColor),
+    );
+  }
+
+  Widget _summaryStatusRow(String status) {
+    late Color dotColor;
+    late Color textColor;
+
+    if (status == 'Approved') {
+      dotColor = JLWColors.mintAccent;
+      textColor = JLWColors.mintAccent;
+    } else if (status == 'Rejected') {
+      dotColor = JLWColors.buttonReject;
+      textColor = JLWColors.buttonReject;
+    } else {
+      dotColor = const Color(0xFFF59E0B);
+      textColor = const Color(0xFFF59E0B);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'ORDER STATUS',
+            style: TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
-          const Divider(color: JLWColors.borderColor, height: 1),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                status,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Project ID Full-Width Box
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("PROJECT ID", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(order.projectIdFull, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-              ],
+  Widget _summaryCell(
+    String label,
+    String value, {
+    bool rightBorder = false,
+    Color valueColor = Colors.white,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: rightBorder
+            ? const Border(right: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
-
-          // CO NUMBER | ORDER DATE
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      border: Border(right: BorderSide(color: JLWColors.borderColor)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("CO NUMBER", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(order.coNumber, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("ORDER DATE", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(
-                          order.id == '2323135' ? '10-OCT-2026' : order.orderDate,
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: JLWColors.borderColor, height: 1),
-
-          // ORDER STATUS Row
-          Container(
-            padding: const EdgeInsets.all(14),
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("ORDER STATUS", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: order.status == 'Approved'
-                            ? JLWColors.mintAccent
-                            : order.status == 'Rejected'
-                                ? JLWColors.buttonReject
-                                : const Color(0xFFF59E0B),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      order.status,
-                      style: TextStyle(
-                        color: order.status == 'Approved'
-                            ? JLWColors.mintAccent
-                            : order.status == 'Rejected'
-                                ? JLWColors.buttonReject
-                                : const Color(0xFFF59E0B),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // SUPPLIER NAME Row
-          Container(
-            padding: const EdgeInsets.all(14),
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("SUPPLIER NAME", style: TextStyle(color: JLWColors.slateText, fontSize: 9, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(
-                  order.id == '2323135' ? "James O' Malley Global Sourcing Ltd." : order.supplierName,
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -303,122 +317,107 @@ class OrderDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildLineItemCard(LineItemModel item) {
-    final fmt = NumberFormat.getNumberInstance(Locale.US);
+    final fmt = NumberFormat('#,##0', 'en_US');
     final unitCostFormatted = fmt.format(item.unitCost);
     final extendedCostFormatted = fmt.format(item.extendedCost);
 
-    String quantityFormatted = fmt.format(item.quantity);
-    if (item.quantity == item.quantity.toInt().toDouble()) {
-      quantityFormatted = "${item.quantity.toInt()} ${item.unit}";
-    } else {
-      quantityFormatted = "$quantityFormatted ${item.unit}";
-    }
+    final quantityFormatted = item.quantity == item.quantity.toInt().toDouble()
+        ? '${item.quantity.toInt()} ${item.unit}'
+        : '${fmt.format(item.quantity)} ${item.unit}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: JLWColors.cardBg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: JLWColors.borderColor),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header details block split
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        right: BorderSide(color: JLWColors.borderColor),
-                        bottom: BorderSide(color: JLWColors.borderColor),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Line", style: TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(item.lineNumber.toString(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: _lineItemCell(
+                  'Line',
+                  item.lineNumber.toString(),
+                  rightBorder: true,
+                  bottomBorder: true,
                 ),
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        right: BorderSide(color: JLWColors.borderColor),
-                        bottom: BorderSide(color: JLWColors.borderColor),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Item Code", style: TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(item.itemCode, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
+              ),
+              Expanded(
+                flex: 4,
+                child: _lineItemCell(
+                  'Item Code',
+                  item.itemCode,
+                  rightBorder: true,
+                  bottomBorder: true,
                 ),
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Requested Date", style: TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        Text(item.requestedDate, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
+              ),
+              Expanded(
+                flex: 4,
+                child: _lineItemCell(
+                  'Requested Date',
+                  item.requestedDate,
+                  bottomBorder: true,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-
-          // Description Full Width Block
           Container(
             padding: const EdgeInsets.all(12),
-            width: double.infinity,
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Description", style: TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Description',
+                  style: TextStyle(
+                    color: JLWColors.slateText,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   item.description,
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, height: 1.3),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),
           ),
-
-          // Pricing block row (Qty / Unit Cost / Extended Cost)
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Expanded(child: _buildPriceCell("QTY", quantityFormatted, JLWColors.mintAccent)),
+                Expanded(
+                  child: _priceCell('QTY', quantityFormatted, JLWColors.mintAccent),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildPriceCell("Unit Cost", "$unitCostFormatted AED", Colors.white)),
+                Expanded(
+                  child: _priceCell(
+                    'Unit Cost',
+                    '$unitCostFormatted AED',
+                    Colors.white,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildPriceCell("Extended Cost", "$extendedCostFormatted AED", JLWColors.mintAccent, flex: 1.2)),
+                Expanded(
+                  child: _priceCell(
+                    'Extended Cost',
+                    '$extendedCostFormatted AED',
+                    JLWColors.mintAccent,
+                  ),
+                ),
               ],
             ),
           ),
@@ -427,114 +426,292 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceCell(String heading, String innerText, Color textColor, {double flex = 1.0}) {
+  Widget _lineItemCell(
+    String label,
+    String value, {
+    bool rightBorder = false,
+    bool bottomBorder = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        border: Border(
+          right: rightBorder
+              ? const BorderSide(color: JLWColors.borderColor)
+              : BorderSide.none,
+          bottom: bottomBorder
+              ? const BorderSide(color: JLWColors.borderColor)
+              : BorderSide.none,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceCell(String heading, String value, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: JLWColors.inputBg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: JLWColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(heading, style: const TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
+          Text(
+            heading,
+            style: const TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
-            innerText,
+            value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDecisionTray(BuildContext context, OrderModel order, ApprovalsProvider provider) {
+  Widget _buildDecisionTray(
+    BuildContext context,
+    OrderModel order,
+    ApprovalsProvider provider,
+  ) {
     return Container(
-      color: JLWColors.darkBg,
-      padding: const EdgeInsets.all(14.0),
-      child: order.status == 'Awaiting Approval'
-          ? Row(
-              children: [
-                // REJECT button
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      provider.rejectOrder(orderId);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: JLWColors.buttonReject,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        side: const BorderSide(color: JLWColors.borderColor),
+      decoration: const BoxDecoration(
+        color: JLWColors.darkBg,
+        border: Border(top: BorderSide(color: JLWColors.borderColor)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: SafeArea(
+        top: false,
+        child: order.status == 'Awaiting Approval'
+            ? Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        onPressed: () => _confirmReject(context, provider),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white54),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'REJECT ORDER',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
                       ),
                     ),
-                    child: const Text(
-                      "REJECT\nORDER",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.extrabold, fontSize: 11, height: 1.2),
-                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-
-                // APPROVE NOW button
-                Expanded(
-                  flex: 3,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      provider.approveOrder(orderId);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: JLWColors.mintAccent,
-                      foregroundColor: JLWColors.textDark,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.check_circle, size: 20),
-                        SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("APPROVE", style: TextStyle(fontWeight: FontWeight.black, fontSize: 12, height: 1.0)),
-                            Text("NOW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, height: 1.0)),
-                          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _confirmApprove(context, provider),
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: const Text(
+                          'APPROVE NOW',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ],
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: JLWColors.mintAccent,
+                          foregroundColor: JLWColors.textDark,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                ],
+              )
+            : Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: JLWColors.inputBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: order.status == 'Approved'
+                        ? JLWColors.mintAccent
+                        : JLWColors.buttonReject,
+                  ),
                 ),
-              ],
-            )
-          : Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: JLWColors.inputBg,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: order.status == 'Approved' ? JLWColors.mintAccent : JLWColors.buttonReject,
+                child: Text(
+                  'ORDER ${order.status.toUpperCase()}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: order.status == 'Approved'
+                        ? JLWColors.mintAccent
+                        : JLWColors.buttonReject,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-              child: Text(
-                "ORDER ${order.status.toUpperCase()} SECURELY BY EXECUTIVE",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: order.status == 'Approved' ? JLWColors.mintAccent : JLWColors.buttonReject,
-                  fontWeight: FontWeight.black,
-                  fontSize: 13,
-                ),
+      ),
+    );
+  }
+
+  Future<void> _confirmApprove(
+    BuildContext context,
+    ApprovalsProvider provider,
+  ) async {
+    final confirmed = await _showConfirmDialog(
+      context,
+      title: 'Confirm Approval',
+      message:
+          'Are you sure you want to approve Order #$orderId? This action cannot be undone.',
+      confirmLabel: 'Approve',
+      isDestructive: false,
+    );
+    if (confirmed == true && context.mounted) {
+      provider.approveOrder(orderId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order #$orderId approved successfully'),
+          backgroundColor: JLWColors.mintAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmReject(
+    BuildContext context,
+    ApprovalsProvider provider,
+  ) async {
+    final confirmed = await _showConfirmDialog(
+      context,
+      title: 'Confirm Rejection',
+      message:
+          'Are you sure you want to reject Order #$orderId? This action cannot be undone.',
+      confirmLabel: 'Reject',
+      isDestructive: true,
+    );
+    if (confirmed == true && context.mounted) {
+      provider.rejectOrder(orderId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Order rejected'),
+          backgroundColor: JLWColors.buttonReject,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<bool?> _showConfirmDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required bool isDestructive,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: JLWColors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: JLWColors.borderColor),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: JLWColors.slateText,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: JLWColors.slateText,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDestructive
+                  ? JLWColors.buttonReject
+                  : JLWColors.mintAccent,
+              foregroundColor:
+                  isDestructive ? Colors.white : JLWColors.textDark,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              confirmLabel,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

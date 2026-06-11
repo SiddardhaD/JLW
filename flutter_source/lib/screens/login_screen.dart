@@ -16,11 +16,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  static const _serif = TextStyle(fontFamily: 'serif');
+
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _attemptLogin(ApprovalsProvider provider) {
+    provider.login();
+    if (provider.isAuthenticated) {
+      widget.onLoginSuccess();
+    }
+  }
+
+  void _quickDemoLogin(ApprovalsProvider provider) {
+    _usernameController.text = 'EXECUTIVE_DEMO';
+    _passwordController.text = 'SECURE123';
+    provider.setUsername('EXECUTIVE_DEMO');
+    provider.setPassword('SECURE123');
+    _attemptLogin(provider);
   }
 
   @override
@@ -31,257 +48,278 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: JLWColors.darkBg,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 48),
-
-              // Enterprise logo branding mark
-              Center(
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: JLWColors.cardBg,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: JLWColors.mintAccent, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: JLWColors.mintAccent.withOpacity(0.15),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      )
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.fingerprint,
-                      color: JLWColors.mintAccent,
-                      size: 48,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // Title Display Pairs
-              const Text(
-                "JLW",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 42,
-                  letterSpacing: 2,
-                ),
-              ),
-              const Text(
-                "EXECUTIVE APPROVALS PORTAL",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JLWColors.mintAccent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                "TRUST SECURED SINCE 1875",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: JLWColors.slateText,
-                  fontSize: 9,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
-              // Error banner if any
-              if (provider.loginError != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: JLWColors.buttonReject.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: JLWColors.buttonReject.withOpacity(0.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, color: JLWColors.buttonReject, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          provider.loginError!,
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-
-              // Username input
-              const Text(
-                "ENTERPRISE USER IDENTIFIER",
-                style: TextStyle(
-                  color: JLWColors.slateText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _usernameController,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-                onChanged: provider.setUsername,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: JLWColors.inputBg,
-                  hintText: "e.g., EXECUTIVE_ADMIN",
-                  hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.mintAccent),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Password input
-              const Text(
-                "SECURITY ACCESS PIN / KEY",
-                style: TextStyle(
-                  color: JLWColors.slateText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-                onChanged: provider.setPassword,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: JLWColors.inputBg,
-                  hintText: "••••••••",
-                  hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: JLWColors.mintAccent),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 32),
+              _buildHeader(),
+              const SizedBox(height: 28),
+              _buildLoginCard(provider),
+              const SizedBox(height: 48),
+              _buildFooter(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // Sign in button
-              ElevatedButton(
-                onPressed: () {
-                  provider.login();
-                  if (provider.isAuthenticated) {
-                    widget.onLoginSuccess();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: JLWColors.mintAccent,
-                  foregroundColor: JLWColors.textDark,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedCornerShape(6),
-                  elevation: 4,
-                ),
-                child: const Text(
-                  "SIGN IN SECURELY",
-                  style: TextStyle(
-                    fontWeight: FontWeight.extrabold,
-                    letterSpacing: 1.0,
-                    fontSize: 14,
-                  ),
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Center(
+          child: Image.asset(
+            'assets/images/logo.png',
+            height: 80,
+            fit: BoxFit.contain,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Container(
+          width: 48,
+          height: 3,
+          decoration: BoxDecoration(
+            color: JLWColors.brandGreen,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard(ApprovalsProvider provider) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: BoxDecoration(
+        color: JLWColors.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: JLWColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Sign In',
+            style: _serif.copyWith(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'SECURE ENTERPRISE ACCESS',
+            style: TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (provider.loginError != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: JLWColors.buttonReject.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: JLWColors.buttonReject.withOpacity(0.4),
                 ),
               ),
-
-              const SizedBox(height: 48),
-
-              // Biometric simulated pass section
-              Container(
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    const Text(
-                      "OR QUICK SIGN IN FOR DEVELOPMENT",
-                      style: TextStyle(
-                        color: JLWColors.slateText,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 9,
-                        letterSpacing: 1.0,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: JLWColors.buttonReject,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      provider.loginError!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () {
-                        _usernameController.text = "EXECUTIVE_DEMO";
-                        _passwordController.text = "SECURE123";
-                        provider.setUsername("EXECUTIVE_DEMO");
-                        provider.setPassword("SECURE123");
-                        provider.login();
-                        if (provider.isAuthenticated) {
-                          widget.onLoginSuccess();
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: JLWColors.cardBg,
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: JLWColors.mintAccent.withOpacity(0.4)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.face, color: JLWColors.mintAccent, size: 24),
-                            SizedBox(width: 8),
-                            Text(
-                              "Simulate Face ID Gate",
-                              style: TextStyle(
-                                color: JLWColors.mintAccent,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+          _buildFieldLabel('USER NAME'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: _usernameController,
+            hint: 'Enter identity ID',
+            icon: Icons.person_outline,
+            onChanged: provider.setUsername,
+          ),
+          const SizedBox(height: 20),
+          _buildFieldLabel('PASSWORD'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: _passwordController,
+            hint: '••••••••',
+            icon: Icons.lock_outline,
+            obscureText: true,
+            onChanged: provider.setPassword,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => _attemptLogin(provider),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: JLWColors.brandGreen,
+                foregroundColor: JLWColors.textDark,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'LOGIN',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildBiometricDivider(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBiometricButton(
+                  icon: Icons.face_outlined,
+                  label: 'Face ID',
+                  onTap: () => _quickDemoLogin(provider),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBiometricButton(
+                  icon: Icons.fingerprint,
+                  label: 'Fingerprint',
+                  onTap: () => _quickDemoLogin(provider),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: JLWColors.slateText,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required ValueChanged<String> onChanged,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      onChanged: onChanged,
+      style: _serif.copyWith(color: Colors.white, fontSize: 15),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: JLWColors.inputBg,
+        hintText: hint,
+        hintStyle: _serif.copyWith(
+          color: JLWColors.slateText.withOpacity(0.7),
+          fontSize: 14,
+        ),
+        prefixIcon: Icon(icon, color: JLWColors.slateText, size: 20),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: JLWColors.borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: JLWColors.borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: JLWColors.brandGreen, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBiometricDivider() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: JLWColors.borderColor, height: 1)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'BIOMETRIC AUTH',
+            style: TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+        const Expanded(child: Divider(color: JLWColors.borderColor, height: 1)),
+      ],
+    );
+  }
+
+  Widget _buildBiometricButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: JLWColors.inputBg,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: JLWColors.borderColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: JLWColors.brandGreen, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: JLWColors.brandGreen,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -291,6 +329,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  RoundedRectangleBorder RoundedCornerShape(double radius) =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
+  Widget _buildFooter() {
+    return Column(
+      children: [
+        Text(
+          'Internal Executive Tool • v4.2.0',
+          textAlign: TextAlign.center,
+          style: _serif.copyWith(
+            color: JLWColors.slateText,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildFooterLink('Privacy Policy'),
+            const SizedBox(width: 24),
+            _buildFooterLink('System Status'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooterLink(String label) {
+    return GestureDetector(
+      onTap: () {},
+      child: Text(
+        label,
+        style: _serif.copyWith(
+          color: JLWColors.slateText,
+          fontSize: 11,
+          decoration: TextDecoration.underline,
+          decorationColor: JLWColors.slateText.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
 }

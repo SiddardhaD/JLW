@@ -36,12 +36,6 @@ class JLWApprovalsApp extends StatelessWidget {
             foregroundColor: Colors.white,
             elevation: 0,
           ),
-          choiceChipTheme: ChoiceChipThemeData(
-            selectedColor: JLWColors.mintAccent,
-            backgroundColor: JLWColors.cardBg,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          ),
         ),
         initialRoute: '/login',
         onGenerateRoute: (settings) {
@@ -62,7 +56,8 @@ class JLWApprovalsApp extends StatelessWidget {
                   Navigator.pushNamed(context, '/details', arguments: orderId);
                 },
                 onLogout: () {
-                  final provider = Provider.of<ApprovalsProvider>(context, listen: false);
+                  final provider =
+                      Provider.of<ApprovalsProvider>(context, listen: false);
                   provider.logout();
                   Navigator.pushReplacementNamed(context, '/login');
                 },

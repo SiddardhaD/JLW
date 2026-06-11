@@ -25,115 +25,96 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: JLWColors.darkBg,
         elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: JLWColors.mintAccent),
+          onPressed: () {},
+        ),
         title: const Text(
-          "JLW Approvals Board",
+          'Orders Awaiting Approval',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: JLWColors.mintAccent),
-            tooltip: "Logout Securely",
+            icon: const Icon(Icons.close, color: JLWColors.mintAccent),
+            tooltip: 'Close',
             onPressed: onLogout,
-          )
+          ),
         ],
       ),
       body: Column(
         children: [
-          // Section 1: Dynamic Metrics Stats Cards
+          _buildApproverInfoBar(),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              children: [
-                _buildMetricCard(
-                  title: "URGENT",
-                  value: "01",
-                  highlightColor: JLWColors.statusUrgent,
-                ),
-                const SizedBox(width: 10),
-                _buildMetricCard(
-                  title: "HIGH VALUE",
-                  value: "02",
-                  highlightColor: JLWColors.statusHighValue,
-                ),
-                const SizedBox(width: 10),
-                _buildMetricCard(
-                  title: "TOTAL VALUE",
-                  value: "324.2M",
-                  highlightColor: JLWColors.mintAccent,
-                ),
-              ],
-            ),
-          ),
-
-          // Section 2: Search Input
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: TextField(
               style: const TextStyle(color: Colors.white, fontSize: 14),
               onChanged: provider.search,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: JLWColors.cardBg,
-                prefixIcon: const Icon(Icons.search, color: JLWColors.slateText),
-                hintText: "Search Order #, Originator, Supplier...",
-                hintStyle: const TextStyle(color: JLWColors.slateText, fontSize: 13),
+                fillColor: JLWColors.inputBg,
+                prefixIcon: const Icon(Icons.search,
+                    color: JLWColors.slateText, size: 20),
+                hintText: 'Search by Order No., Supplier...',
+                hintStyle: const TextStyle(
+                  color: JLWColors.slateText,
+                  fontSize: 13,
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: JLWColors.borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: JLWColors.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: JLWColors.mintAccent),
                 ),
               ),
             ),
           ),
-
-          // Section 3: Scrollable Category Pills
+          const SizedBox(height: 12),
           SizedBox(
-            height: 42,
+            height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                'All',
-                'High Value',
-                'Today',
-                'Pending'
-              ].map((filter) {
+              children: ['All', 'High Value', 'Today', 'Pending'].map((filter) {
                 final isSelected = provider.selectedFilter == filter;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(
-                      filter,
-                      style: TextStyle(
-                        color: isSelected ? JLWColors.textDark : Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => provider.selectFilter(filter),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? JLWColors.mintAccent
+                            : JLWColors.cardBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? JLWColors.mintAccent
+                              : JLWColors.borderColor,
+                        ),
                       ),
-                    ),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        provider.selectFilter(filter);
-                      }
-                    },
-                    selectedColor: JLWColors.mintAccent,
-                    backgroundColor: JLWColors.cardBg,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      side: BorderSide(
-                        color: isSelected ? JLWColors.mintAccent : JLWColors.borderColor,
+                      child: Text(
+                        filter,
+                        style: TextStyle(
+                          color: isSelected
+                              ? JLWColors.textDark
+                              : JLWColors.slateText,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -141,32 +122,37 @@ class DashboardScreen extends StatelessWidget {
               }).toList(),
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // Section 4: Dynamic Interactive Order Cards List
+          const SizedBox(height: 8),
           Expanded(
             child: orders.isEmpty
                 ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.folder_open, size: 64, color: JLWColors.slateText),
+                        Icon(Icons.folder_open,
+                            size: 64, color: JLWColors.slateText),
                         SizedBox(height: 16),
                         Text(
-                          "No Purchase Orders Checked In",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          'No orders found',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          "Adjust filters or search parameters",
-                          style: TextStyle(color: JLWColors.slateText, fontSize: 13),
+                          'Adjust filters or search parameters',
+                          style: TextStyle(
+                            color: JLWColors.slateText,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     itemCount: orders.length,
                     itemBuilder: (context, index) {
                       final order = orders[index];
@@ -181,43 +167,125 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+      bottomNavigationBar: _buildBottomNav(onLogout),
     );
   }
 
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required Color highlightColor,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: JLWColors.cardBg,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: JLWColors.borderColor),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildApproverInfoBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      decoration: BoxDecoration(
+        color: JLWColors.cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: JLWColors.borderColor),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(color: highlightColor, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: const TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold),
-                ),
-              ],
+            Expanded(child: _infoCell('APPROVER ID', '1234567')),
+            Container(width: 1, color: JLWColors.borderColor),
+            Expanded(child: _infoCell('PROJECT', 'M30')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoCell(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
             ),
-            const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: JLWColors.mintAccent,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(VoidCallback onLogout) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: JLWColors.cardBg,
+        border: Border(top: BorderSide(color: JLWColors.borderColor)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _navItem(
+                icon: Icons.assignment_turned_in_outlined,
+                label: 'Approvals',
+                isActive: true,
+              ),
+              _navItem(
+                icon: Icons.assignment_outlined,
+                label: 'Review',
+                isActive: false,
+              ),
+              _navItem(
+                icon: Icons.person_outline,
+                label: 'Account',
+                isActive: false,
+                onTap: onLogout,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? JLWColors.mintAccent : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isActive ? JLWColors.textDark : JLWColors.slateText,
+            ),
+            const SizedBox(width: 6),
             Text(
-              value,
-              style: TextStyle(color: highlightColor, fontSize: 20, fontWeight: FontWeight.black, letterSpacing: 0.5),
+              label,
+              style: TextStyle(
+                color: isActive ? JLWColors.textDark : JLWColors.slateText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -241,109 +309,136 @@ class _OrderCardItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '', decimalDigits: 0);
-    final formattedAmount = currencyFormatter.format(order.orderAmount);
+    final fmt = NumberFormat('#,##0', 'en_US');
+    final formattedAmount = fmt.format(order.orderAmount);
+    final isPending = order.status == 'Awaiting Approval';
+    final showBothButtons = isPending && order.priority == 'HIGH VALUE';
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: JLWColors.cardBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: order.status == 'Approved'
-                ? JLWColors.mintAccent.withOpacity(0.4)
-                : order.status == 'Rejected'
-                    ? JLWColors.buttonReject.withOpacity(0.4)
-                    : JLWColors.borderColor,
-          ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: JLWColors.borderColor),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Head Section
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        "${order.orderType}-${order.project}",
-                        style: const TextStyle(
-                          color: JLWColors.mintAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                  if (order.priority == 'HIGH VALUE') ...[
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: JLWColors.statusHighValue,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      'ORDER # ${order.id}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        order.id,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  _buildPriorityPill(order.priority),
+                  // _buildPriorityBadge(order.priority),
                 ],
               ),
             ),
             const Divider(color: JLWColors.borderColor, height: 1),
-
-            // Card body details
+            _buildGridCell(
+              leftLabel: 'Originator',
+              leftValue: order.originator,
+              rightLabel: 'Responsible',
+              rightValue: order.responsible,
+              bottomBorder: true,
+            ),
+            _buildGridCell(
+              leftLabel: 'Order Ty',
+              leftValue: order.orderType,
+              rightLabel: 'Order Date',
+              rightValue: order.orderDate,
+              bottomBorder: true,
+            ),
+            _buildFullWidthCell('Supplier Name', order.supplierName),
+            const Divider(color: JLWColors.borderColor, height: 1),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _buildDetailRow("ORIGINATOR", order.originator, "RESPONSIBLE", order.responsible),
-                  const SizedBox(height: 8),
-                  _buildFullWidthRow("SUPPLIER", order.supplierName),
-                  const SizedBox(height: 10),
-
-                  // Amount presentation box
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: JLWColors.inputBg,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: JLWColors.borderColor),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "TOTAL ORDER VALUE",
+                          'Order Amount',
                           style: TextStyle(
                             color: JLWColors.slateText,
-                            fontWeight: FontWeight.bold,
                             fontSize: 10,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Text(
-                          "$formattedAmount ${order.currency}",
-                          style: const TextStyle(
-                            color: JLWColors.mintAccent,
-                            fontWeight: FontWeight.extrabold,
-                            fontSize: 13,
+                        const SizedBox(height: 2),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: formattedAmount,
+                                style: const TextStyle(
+                                  color: JLWColors.mintAccent,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' AED',
+                                style: TextStyle(
+                                  color: JLWColors.mintAccent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  if (order.status == 'Approved')
+                    _buildStatusLabel(
+                      'APPROVED',
+                      JLWColors.mintAccent,
+                      Icons.check_circle_outline,
+                    )
+                  else if (order.status == 'Rejected')
+                    _buildStatusLabel(
+                      'REJECTED',
+                      JLWColors.buttonReject,
+                      Icons.cancel_outlined,
+                    )
+                  else if (showBothButtons)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _rejectButton(),
+                        const SizedBox(width: 8),
+                        _approveButton(width: 100),
+                      ],
+                    )
+                  else
+                    _approveButton(width: 120),
                 ],
               ),
-            ),
-
-            const Divider(color: JLWColors.borderColor, height: 1),
-
-            // Interaction section or state stamp
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: _buildFooterSection(),
             ),
           ],
         ),
@@ -351,146 +446,176 @@ class _OrderCardItem extends StatelessWidget {
     );
   }
 
-  Widget _buildPriorityPill(String level) {
-    Color pillColor;
-    Color textColor = Colors.black;
+  Widget _buildPriorityBadge(String priority) {
+    late Color bg;
+    late Color fg;
 
-    if (level == 'URGENT') {
-      pillColor = JLWColors.statusUrgent;
-      textColor = Colors.white;
-    } else if (level == 'HIGH VALUE') {
-      pillColor = JLWColors.statusHighValue;
-      textColor = Colors.black;
-    } else {
-      pillColor = JLWColors.inputBg;
-      textColor = JLWColors.slateText;
+    switch (priority) {
+      case 'URGENT':
+        bg = JLWColors.mintAccent;
+        fg = JLWColors.textDark;
+        break;
+      case 'HIGH VALUE':
+        bg = const Color(0xFFE53935);
+        fg = Colors.white;
+        break;
+      default:
+        bg = const Color(0xFF1E2D45);
+        fg = const Color(0xFF7B9EC4);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: pillColor,
+        color: bg,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        level,
+        priority,
         style: TextStyle(
-          color: textColor,
+          color: fg,
           fontSize: 9,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String k1, String v1, String k2, String v2) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(k1, style: const TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Text(v1, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
+  Widget _buildGridCell({
+    required String leftLabel,
+    required String leftValue,
+    required String rightLabel,
+    required String rightValue,
+    bool bottomBorder = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: bottomBorder
+            ? const Border(bottom: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _cellContent(leftLabel, leftValue, rightBorder: true),
           ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(k2, style: const TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Text(v2, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      ],
+          Expanded(child: _cellContent(rightLabel, rightValue)),
+        ],
+      ),
     );
   }
 
-  Widget _buildFullWidthRow(String title, String value) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(color: JLWColors.slateText, fontSize: 8, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ],
+  Widget _buildFullWidthCell(String label, String value) {
+    return _cellContent(label, value, padding: const EdgeInsets.all(12));
+  }
+
+  Widget _cellContent(
+    String label,
+    String value, {
+    bool rightBorder = false,
+    EdgeInsets padding = const EdgeInsets.all(12),
+  }) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        border: rightBorder
+            ? const Border(right: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: JLWColors.slateText,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildFooterSection() {
-    if (order.status == 'Approved') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.check_circle_outline, color: JLWColors.mintAccent, size: 16),
-          SizedBox(width: 6),
-          Text(
-            "ORDER APPROVED SECURELY",
-            style: TextStyle(color: JLWColors.mintAccent, fontWeight: FontWeight.bold, fontSize: 11),
-          ),
-        ],
-      );
-    }
-
-    if (order.status == 'Rejected') {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.cancel_outlined, color: JLWColors.buttonReject, size: 16),
-          SizedBox(width: 6),
-          Text(
-            "ORDER REJECTED BY EXECUTIVE",
-            style: TextStyle(color: JLWColors.buttonReject, fontWeight: FontWeight.bold, fontSize: 11),
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: onReject,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: JLWColors.buttonReject),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            ),
-            child: const Text(
-              "REJECT",
-              style: TextStyle(color: JLWColors.buttonReject, fontSize: 11, fontWeight: FontWeight.bold),
-            ),
+  Widget _approveButton({required double width}) {
+    return SizedBox(
+      width: width,
+      height: 36,
+      child: ElevatedButton(
+        onPressed: onApprove,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: JLWColors.mintAccent,
+          foregroundColor: JLWColors.textDark,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: onApprove,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: JLWColors.mintAccent,
-              foregroundColor: JLWColors.textDark,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            ),
-            child: const Text(
-              "APPROVE NOW",
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.extrabold),
-            ),
+        child: const Text(
+          'APPROVE',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _rejectButton() {
+    return SizedBox(
+      width: 90,
+      height: 36,
+      child: OutlinedButton(
+        onPressed: onReject,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.white54),
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        child: const Text(
+          'REJECT',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusLabel(String text, Color color, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
           ),
         ),
       ],
