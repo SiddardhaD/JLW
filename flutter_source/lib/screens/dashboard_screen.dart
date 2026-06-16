@@ -100,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: ['All', 'High Value', 'Today', 'Pending'].map((filter) {
+              children: ['All', 'Today', 'Pending'].map((filter) {
                 final isSelected = provider.selectedFilter == filter;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -372,7 +372,7 @@ class _OrderCardItem extends StatelessWidget {
                   ],
                   Expanded(
                     child: Text(
-                      'ORDER # ${order.id}',
+                      'ORDER NO. #${order.id}',
                       style: const TextStyle(
                         color: JLWColors.textDark,
                         fontWeight: FontWeight.w700,
@@ -395,7 +395,7 @@ class _OrderCardItem extends StatelessWidget {
             _buildGridCell(
               leftLabel: 'Order Ty',
               leftValue: order.orderType,
-              rightLabel: 'Order Date',
+              rightLabel: 'Request Date',
               rightValue: order.orderDate,
               bottomBorder: true,
             ),
@@ -431,9 +431,9 @@ class _OrderCardItem extends StatelessWidget {
                                   height: 1.1,
                                 ),
                               ),
-                              const TextSpan(
-                                text: ' AED',
-                                style: TextStyle(
+                              TextSpan(
+                                text: ' ${order.currency}',
+                                style: const TextStyle(
                                   color: JLWColors.mintAccent,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
