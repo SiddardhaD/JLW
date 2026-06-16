@@ -26,14 +26,14 @@ class JLWApprovalsApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
             seedColor: JLWColors.mintAccent,
-            brightness: Brightness.dark,
+            brightness: Brightness.light,
             background: JLWColors.darkBg,
             surface: JLWColors.cardBg,
           ),
           scaffoldBackgroundColor: JLWColors.darkBg,
           appBarTheme: const AppBarTheme(
-            backgroundColor: JLWColors.darkBg,
-            foregroundColor: Colors.white,
+            backgroundColor: Colors.white,
+            foregroundColor: JLWColors.textDark,
             elevation: 0,
           ),
         ),

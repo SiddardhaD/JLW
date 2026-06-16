@@ -1,3 +1,5 @@
+import 'orders_api_models.dart';
+
 /// Model representing a Purchase Order in the JLW system.
 class OrderModel {
   final String id;
@@ -10,7 +12,7 @@ class OrderModel {
   final double orderAmount;
   final String currency;
   final String priority; // "URGENT", "ROUTINE", "HIGH VALUE"
-  String status;         // "Awaiting Approval", "Approved", "Rejected"
+  String status; // "Awaiting Approval", "Approved", "Rejected"
   final String coNumber;
   final String projectIdFull;
 
@@ -45,6 +47,24 @@ class OrderModel {
       status: status ?? this.status,
       coNumber: coNumber,
       projectIdFull: projectIdFull,
+    );
+  }
+
+  factory OrderModel.fromApi(OrderListItemResponse item) {
+    return OrderModel(
+      id: item.orderNumber.toString(),
+      originator: item.originator,
+      responsible: 'Pending',
+      project: item.orderCo,
+      orderType: item.orderType,
+      orderDate: item.requestDate,
+      supplierName: item.supplierName,
+      orderAmount: item.orderAmount,
+      currency: item.baseCurr,
+      priority: item.orderAmount >= 500000 ? 'HIGH VALUE' : 'ROUTINE',
+      status: 'Awaiting Approval',
+      coNumber: item.orderCo,
+      projectIdFull: item.orderCo,
     );
   }
 }

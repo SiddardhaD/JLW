@@ -26,7 +26,7 @@ class OrderDetailsScreen extends StatelessWidget {
       return Scaffold(
         backgroundColor: JLWColors.darkBg,
         appBar: AppBar(
-          backgroundColor: JLWColors.darkBg,
+          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: JLWColors.mintAccent),
@@ -36,7 +36,7 @@ class OrderDetailsScreen extends StatelessWidget {
         body: const Center(
           child: Text(
             'Order not found',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: JLWColors.textDark),
           ),
         ),
       );
@@ -45,7 +45,7 @@ class OrderDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: JLWColors.darkBg,
       appBar: AppBar(
-        backgroundColor: JLWColors.darkBg,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -55,14 +55,14 @@ class OrderDetailsScreen extends StatelessWidget {
         title: Text(
           'Order No: $orderId',
           style: const TextStyle(
-            color: Colors.white,
+            color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white70),
+            icon: const Icon(Icons.close, color: JLWColors.slateText),
             onPressed: onBack,
           ),
         ],
@@ -81,7 +81,7 @@ class OrderDetailsScreen extends StatelessWidget {
                     const Text(
                       'Line Items',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: JLWColors.textDark,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -386,7 +386,7 @@ class OrderDetailsScreen extends StatelessWidget {
                 Text(
                   item.description,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: JLWColors.textDark,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     height: 1.35,
@@ -459,7 +459,7 @@ class OrderDetailsScreen extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: JLWColors.textDark,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -526,8 +526,8 @@ class OrderDetailsScreen extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => _confirmReject(context, provider),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.white54),
-                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: JLWColors.buttonReject),
+                          foregroundColor: JLWColors.buttonReject,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -639,7 +639,7 @@ class OrderDetailsScreen extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       provider.rejectOrder(orderId);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+                        const SnackBar(
           content: Text('Order rejected'),
           backgroundColor: JLWColors.buttonReject,
           behavior: SnackBarBehavior.floating,
@@ -667,7 +667,7 @@ class OrderDetailsScreen extends StatelessWidget {
         title: Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),

@@ -5,7 +5,7 @@ import '../models/order.dart';
 import '../providers/approvals_provider.dart';
 import 'package:intl/intl.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final Function(String) onOrderSelect;
   final VoidCallback onLogout;
 
@@ -16,6 +16,20 @@ class DashboardScreen extends StatelessWidget {
   });
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ApprovalsProvider>().fetchOrders();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ApprovalsProvider>(context);
     final orders = provider.filteredOrders;
@@ -23,7 +37,7 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: JLWColors.darkBg,
       appBar: AppBar(
-        backgroundColor: JLWColors.darkBg,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -33,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
         title: const Text(
           'Orders Awaiting Approval',
           style: TextStyle(
-            color: Colors.white,
+            color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -42,7 +56,7 @@ class DashboardScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close, color: JLWColors.mintAccent),
             tooltip: 'Close',
-            onPressed: onLogout,
+            onPressed: widget.onLogout,
           ),
         ],
       ),
@@ -52,7 +66,7 @@ class DashboardScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: TextField(
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: JLWColors.textDark, fontSize: 14),
               onChanged: provider.search,
               decoration: InputDecoration(
                 filled: true,
@@ -124,50 +138,68 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: orders.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.folder_open,
-                            size: 64, color: JLWColors.slateText),
-                        SizedBox(height: 16),
-                        Text(
-                          'No orders found',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+            child: provider.isOrdersLoading
+                ? const Center(child: CircularProgressIndicator())
+                : provider.ordersError != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            provider.ordersError!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: JLWColors.buttonReject,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Adjust filters or search parameters',
-                          style: TextStyle(
-                            color: JLWColors.slateText,
-                            fontSize: 13,
+                      )
+                    : orders.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.folder_open,
+                                    size: 64, color: JLWColors.slateText),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No orders found',
+                                  style: TextStyle(
+                                    color: JLWColors.textDark,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Adjust filters or search parameters',
+                                  style: TextStyle(
+                                    color: JLWColors.slateText,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                            itemCount: orders.length,
+                            itemBuilder: (context, index) {
+                              final order = orders[index];
+                              return _OrderCardItem(
+                                order: order,
+                                onTap: () => widget.onOrderSelect(order.id),
+                                onApprove: () =>
+                                    provider.approveOrder(order.id),
+                                onReject: () => provider.rejectOrder(order.id),
+                              );
+                            },
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    itemCount: orders.length,
-                    itemBuilder: (context, index) {
-                      final order = orders[index];
-                      return _OrderCardItem(
-                        order: order,
-                        onTap: () => onOrderSelect(order.id),
-                        onApprove: () => provider.approveOrder(order.id),
-                        onReject: () => provider.rejectOrder(order.id),
-                      );
-                    },
-                  ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(onLogout),
+      bottomNavigationBar: _buildBottomNav(widget.onLogout),
     );
   }
 
@@ -342,7 +374,7 @@ class _OrderCardItem extends StatelessWidget {
                     child: Text(
                       'ORDER # ${order.id}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: JLWColors.textDark,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -446,42 +478,6 @@ class _OrderCardItem extends StatelessWidget {
     );
   }
 
-  Widget _buildPriorityBadge(String priority) {
-    late Color bg;
-    late Color fg;
-
-    switch (priority) {
-      case 'URGENT':
-        bg = JLWColors.mintAccent;
-        fg = JLWColors.textDark;
-        break;
-      case 'HIGH VALUE':
-        bg = const Color(0xFFE53935);
-        fg = Colors.white;
-        break;
-      default:
-        bg = const Color(0xFF1E2D45);
-        fg = const Color(0xFF7B9EC4);
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        priority,
-        style: TextStyle(
-          color: fg,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
-
   Widget _buildGridCell({
     required String leftLabel,
     required String leftValue,
@@ -541,7 +537,7 @@ class _OrderCardItem extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Colors.white,
+              color: JLWColors.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),

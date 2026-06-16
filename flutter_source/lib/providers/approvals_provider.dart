@@ -1,75 +1,41 @@
 import 'package:flutter/material.dart';
+import '../models/auth_models.dart';
 import '../models/order.dart';
+import '../network/approvals_api_service.dart';
 
 /// State Manager for JLW Approvals.
 /// Replicates the ApprovalsViewModel used in the Jetpack Compose package.
 class ApprovalsProvider extends ChangeNotifier {
+  final ApprovalsApiService _apiService = ApprovalsApiService();
+
   // Authentication States
   String _username = '';
   String _password = '';
   bool _isAuthenticated = false;
+  bool _isLoginLoading = false;
   String? _loginError;
+  LoginSuccessResponse? _loginSuccessResponse;
+  String? _token;
 
   String get username => _username;
   String get password => _password;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isLoginLoading => _isLoginLoading;
   String? get loginError => _loginError;
+  LoginSuccessResponse? get loginSuccessResponse => _loginSuccessResponse;
 
   // Search & Filtering States
   String _searchQuery = '';
   String _selectedFilter = 'All'; // "All", "High Value", "Today", "Pending"
+  bool _isOrdersLoading = false;
+  String? _ordersError;
 
   String get searchQuery => _searchQuery;
   String get selectedFilter => _selectedFilter;
+  bool get isOrdersLoading => _isOrdersLoading;
+  String? get ordersError => _ordersError;
 
-  // Seed Data List corresponding to mockup and native database specifications
-  final List<OrderModel> _orders = [
-    OrderModel(
-      id: "2323135",
-      originator: "Anubhav",
-      responsible: "Nitya",
-      project: "M30",
-      orderType: "OP",
-      orderDate: "12-05-2024",
-      supplierName: "James O'Malley Enterprise",
-      orderAmount: 20002202.0,
-      currency: "AED",
-      priority: "URGENT",
-      status: "Awaiting Approval",
-      coNumber: "00200",
-      projectIdFull: "M30-INFRA-2024",
-    ),
-    OrderModel(
-      id: "2323136",
-      originator: "Hiten",
-      responsible: "Nitya",
-      project: "M30",
-      orderType: "OP",
-      orderDate: "14-05-2024",
-      supplierName: "Global Logistics Ltd.",
-      orderAmount: 20105400.0,
-      currency: "AED",
-      priority: "ROUTINE",
-      status: "Awaiting Approval",
-      coNumber: "00325",
-      projectIdFull: "M30-LOGISTICS-2024",
-    ),
-    OrderModel(
-      id: "2323137",
-      originator: "Shiddartl",
-      responsible: "Nitya",
-      project: "M30",
-      orderType: "OP",
-      orderDate: "15-05-2024",
-      supplierName: "James O'Malley Enterprise",
-      orderAmount: 284000000.0,
-      currency: "AED",
-      priority: "HIGH VALUE",
-      status: "Awaiting Approval",
-      coNumber: "00401",
-      projectIdFull: "M30-MEGA-INFRA",
-    ),
-  ];
+  final List<OrderModel> _orders = [];
 
   // Seed Line Items matching mockup table cells exactly
   final List<LineItemModel> _lineItems = [
@@ -78,7 +44,8 @@ class ApprovalsProvider extends ChangeNotifier {
       lineNumber: 1,
       itemCode: "210-998-A",
       requestedDate: "10-06-2026",
-      description: "Precision Grade Structural Steel - Grade 50 / Type 2 Reinforcement Rods",
+      description:
+          "Precision Grade Structural Steel - Grade 50 / Type 2 Reinforcement Rods",
       quantity: 31.0,
       unit: "KG",
       unitCost: 10.0,
@@ -100,7 +67,8 @@ class ApprovalsProvider extends ChangeNotifier {
       lineNumber: 3,
       itemCode: "EXC-H77",
       requestedDate: "10-06-2026",
-      description: "Heavy Infrastructure Mechanical Excavation Core Assemblies - Base Contractor Installment",
+      description:
+          "Heavy Infrastructure Mechanical Excavation Core Assemblies - Base Contractor Installment",
       quantity: 1.0,
       unit: "LOT",
       unitCost: 20001772.0,
@@ -111,7 +79,8 @@ class ApprovalsProvider extends ChangeNotifier {
       lineNumber: 1,
       itemCode: "610-LOG-B",
       requestedDate: "10-06-2026",
-      description: "International Air Freight Cargo Shippings (High Priority Transport)",
+      description:
+          "International Air Freight Cargo Shippings (High Priority Transport)",
       quantity: 2.0,
       unit: "SHIPMENT",
       unitCost: 10052700.0,
@@ -122,7 +91,8 @@ class ApprovalsProvider extends ChangeNotifier {
       lineNumber: 1,
       itemCode: "999-STRUCT-M",
       requestedDate: "10-06-2026",
-      description: "Heavy Duty Foundation Concrete Pouring & Sub-Level Tunnel Reinforcements",
+      description:
+          "Heavy Duty Foundation Concrete Pouring & Sub-Level Tunnel Reinforcements",
       quantity: 1.0,
       unit: "LOT",
       unitCost: 284000000.0,
@@ -134,11 +104,15 @@ class ApprovalsProvider extends ChangeNotifier {
     return _orders.where((order) {
       final matchesQuery = _searchQuery.isEmpty ||
           order.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          order.supplierName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          order.supplierName
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
           order.originator.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesFilter = _selectedFilter == 'All' ||
-          (_selectedFilter == 'High Value' && (order.priority == 'HIGH VALUE' || order.orderAmount >= 50000000.0)) ||
+          (_selectedFilter == 'High Value' &&
+              (order.priority == 'HIGH VALUE' ||
+                  order.orderAmount >= 50000000.0)) ||
           (_selectedFilter == 'Today' && order.orderDate == '15-05-2024') ||
           (_selectedFilter == 'Pending' && order.status == 'Awaiting Approval');
 
@@ -159,29 +133,80 @@ class ApprovalsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void login() {
-    if (_username.trim().isEmpty) {
-      _loginError = "Username cannot be empty";
+  Future<bool> login() async {
+    if (_username.trim().isEmpty || _password.trim().isEmpty) {
+      _loginError = "Fields can't be empty";
       notifyListeners();
-      return;
+      return false;
     }
-    if (_password.isEmpty) {
-      _loginError = "Password cannot be empty";
-      notifyListeners();
-      return;
-    }
-    _isAuthenticated = true;
+
+    _isLoginLoading = true;
     _loginError = null;
     notifyListeners();
+
+    try {
+      final response = await _apiService.login(
+        LoginRequest(
+          deviceName: 'Android',
+          username: _username.trim(),
+          password: _password.trim(),
+        ),
+      );
+
+      _isAuthenticated = true;
+      _loginSuccessResponse = response;
+      _token = response.token;
+      return true;
+    } on ApiException catch (e) {
+      _isAuthenticated = false;
+      _loginError = e.message;
+      return false;
+    } catch (_) {
+      _isAuthenticated = false;
+      _loginError = 'Unable to login. Please try again.';
+      return false;
+    } finally {
+      _isLoginLoading = false;
+      notifyListeners();
+    }
   }
 
   void logout() {
     _isAuthenticated = false;
+    _isLoginLoading = false;
+    _isOrdersLoading = false;
     _username = '';
     _password = '';
+    _token = null;
+    _loginSuccessResponse = null;
+    _loginError = null;
+    _ordersError = null;
+    _orders.clear();
     _searchQuery = '';
     _selectedFilter = 'All';
     notifyListeners();
+  }
+
+  Future<void> fetchOrders() async {
+    _isOrdersLoading = true;
+    _ordersError = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.fetchOrders(token: _token);
+      _orders
+        ..clear()
+        ..addAll(response.orders.map(OrderModel.fromApi));
+    } on ApiException catch (e) {
+      _orders..clear();
+      _ordersError = e.message;
+    } catch (_) {
+      _orders..clear();
+      _ordersError = 'Unable to load orders.';
+    } finally {
+      _isOrdersLoading = false;
+      notifyListeners();
+    }
   }
 
   // Dashboard Operations

@@ -25,19 +25,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _attemptLogin(ApprovalsProvider provider) {
-    provider.login();
-    if (provider.isAuthenticated) {
+  Future<void> _attemptLogin(ApprovalsProvider provider) async {
+    final isSuccess = await provider.login();
+    if (isSuccess && mounted) {
       widget.onLoginSuccess();
     }
   }
 
-  void _quickDemoLogin(ApprovalsProvider provider) {
-    _usernameController.text = 'EXECUTIVE_DEMO';
-    _passwordController.text = 'SECURE123';
-    provider.setUsername('EXECUTIVE_DEMO');
-    provider.setPassword('SECURE123');
-    _attemptLogin(provider);
+  Future<void> _quickDemoLogin(ApprovalsProvider provider) async {
+    _usernameController.text = 'ASALVI';
+    _passwordController.text = 'ASALVI';
+    provider.setUsername('ASALVI');
+    provider.setPassword('ASALVI');
+    await _attemptLogin(provider);
   }
 
   @override
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
           width: 48,
           height: 3,
           decoration: BoxDecoration(
-            color: JLWColors.brandGreen,
+            color: JLWColors.mintAccent,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Text(
             'Sign In',
             style: _serif.copyWith(
-              color: Colors.white,
+              color: JLWColors.textDark,
               fontSize: 26,
               fontWeight: FontWeight.w600,
             ),
@@ -142,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       provider.loginError!,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: JLWColors.buttonReject,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -174,7 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: () => _attemptLogin(provider),
+              onPressed: provider.isLoginLoading
+                  ? null
+                  : () => _attemptLogin(provider),
               style: ElevatedButton.styleFrom(
                 backgroundColor: JLWColors.brandGreen,
                 foregroundColor: JLWColors.textDark,
@@ -183,14 +185,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'LOGIN',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  letterSpacing: 1.2,
-                ),
-              ),
+              child: provider.isLoginLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                      ),
+                    )
+                  : const Text(
+                      'LOGIN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 24),
@@ -243,13 +256,13 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscureText,
       onChanged: onChanged,
-      style: _serif.copyWith(color: Colors.white, fontSize: 15),
+      style: _serif.copyWith(color: JLWColors.textDark, fontSize: 15),
       decoration: InputDecoration(
         filled: true,
         fillColor: JLWColors.inputBg,
         hintText: hint,
         hintStyle: _serif.copyWith(
-          color: JLWColors.slateText.withOpacity(0.7),
+          color: JLWColors.slateText.withOpacity(0.8),
           fontSize: 14,
         ),
         prefixIcon: Icon(icon, color: JLWColors.slateText, size: 20),
@@ -298,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: JLWColors.inputBg,
+      color: JLWColors.cardBg,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -312,12 +325,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: JLWColors.brandGreen, size: 28),
+              Icon(icon, color: JLWColors.mintAccent, size: 28),
               const SizedBox(height: 8),
               Text(
                 label,
                 style: const TextStyle(
-                  color: JLWColors.brandGreen,
+                  color: JLWColors.mintAccent,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
