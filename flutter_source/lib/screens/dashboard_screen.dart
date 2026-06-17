@@ -192,9 +192,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               return _OrderCardItem(
                                 order: order,
                                 onTap: () => widget.onOrderSelect(order),
-                                onApprove: () =>
-                                    provider.approveOrder(order.id),
-                                onReject: () => provider.rejectOrder(order.id),
+                                onApprove: () => provider.approveOrder(
+                                  orderNumber: int.tryParse(order.id) ?? 0,
+                                  orderCo: order.coNumber,
+                                  orderType: order.orderType,
+                                ),
+                                onReject: () => provider.rejectOrder(
+                                  orderNumber: int.tryParse(order.id) ?? 0,
+                                  orderCo: order.coNumber,
+                                  orderType: order.orderType,
+                                ),
                               );
                             },
                           ),

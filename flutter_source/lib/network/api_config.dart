@@ -9,4 +9,9 @@ class ApiConfig {
 
   static const String waitingPurchaseOrderLineDetailsUrl =
       '$baseUrl/v3/orchestrator/ORCH_55_GetWaitingPurchaseOrderLineDetails';
+
+  static const String purchaseOrderApproveUrl =
+      '$baseUrl/v3/orchestrator/ORCH_55_PurchaseOrderApprove';
+  static const String purchaseOrderRejectUrl =
+      '$baseUrl/v3/orchestrator/ORCH_55_PurchaseOrderReject';
 }

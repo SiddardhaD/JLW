@@ -633,7 +633,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     child: SizedBox(
                       height: 48,
                       child: OutlinedButton(
-                        onPressed: () => _confirmReject(context, provider),
+                        onPressed: provider.isOrderActionLoading
+                            ? null
+                            : () => _confirmReject(context, provider),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: JLWColors.buttonReject),
                           foregroundColor: JLWColors.buttonReject,
@@ -641,14 +643,25 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          'REJECT ORDER',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
+                        child: provider.isOrderActionLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    JLWColors.buttonReject,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                'REJECT ORDER',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -658,11 +671,26 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () => _confirmApprove(context, provider),
-                        icon: const Icon(Icons.check_circle_outline, size: 20),
-                        label: const Text(
-                          'APPROVE NOW',
-                          style: TextStyle(
+                        onPressed: provider.isOrderActionLoading
+                            ? null
+                            : () => _confirmApprove(context, provider),
+                        icon: provider.isOrderActionLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.check_circle_outline, size: 20),
+                        label: Text(
+                          provider.isOrderActionLoading
+                              ? 'PROCESSING...'
+                              : 'APPROVE NOW',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
                             letterSpacing: 0.3,
@@ -723,14 +751,31 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       isDestructive: false,
     );
     if (confirmed == true && context.mounted) {
-      provider.approveOrder(orderId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Order #$orderId approved successfully'),
-          backgroundColor: JLWColors.mintAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
+      final message = await provider.approveOrder(
+        orderNumber: int.tryParse(orderId) ?? 0,
+        orderCo: widget.order.coNumber,
+        orderType: widget.order.orderType,
       );
+      if (!context.mounted) return;
+
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: JLWColors.mintAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.onBack();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.orderActionError ?? 'Approval failed'),
+            backgroundColor: JLWColors.buttonReject,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -748,14 +793,31 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       isDestructive: true,
     );
     if (confirmed == true && context.mounted) {
-      provider.rejectOrder(orderId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order rejected'),
-          backgroundColor: JLWColors.buttonReject,
-          behavior: SnackBarBehavior.floating,
-        ),
+      final message = await provider.rejectOrder(
+        orderNumber: int.tryParse(orderId) ?? 0,
+        orderCo: widget.order.coNumber,
+        orderType: widget.order.orderType,
       );
+      if (!context.mounted) return;
+
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: JLWColors.buttonReject,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.onBack();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.orderActionError ?? 'Rejection failed'),
+            backgroundColor: JLWColors.buttonReject,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

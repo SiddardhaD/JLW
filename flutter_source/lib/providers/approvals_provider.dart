@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
+import '../models/order_action_models.dart';
 import '../models/order_lines_api_models.dart';
 import '../models/order.dart';
 import '../network/approvals_api_service.dart';
@@ -41,10 +42,14 @@ class ApprovalsProvider extends ChangeNotifier {
 
   bool _isWaitingLinesLoading = false;
   String? _waitingLinesError;
+  bool _isOrderActionLoading = false;
+  String? _orderActionError;
 
   List<GetWaitingPurchaseOrderLineDetails> get waitingLines => _waitingLines;
   bool get isWaitingLinesLoading => _isWaitingLinesLoading;
   String? get waitingLinesError => _waitingLinesError;
+  bool get isOrderActionLoading => _isOrderActionLoading;
+  String? get orderActionError => _orderActionError;
 
   // Seed Line Items matching mockup table cells exactly
   final List<LineItemModel> _lineItems = [
@@ -193,6 +198,8 @@ class ApprovalsProvider extends ChangeNotifier {
     _orders.clear();
     _waitingLinesError = null;
     _waitingLines.clear();
+    _isOrderActionLoading = false;
+    _orderActionError = null;
     _searchQuery = '';
     _selectedFilter = 'All';
     notifyListeners();
@@ -268,18 +275,79 @@ class ApprovalsProvider extends ChangeNotifier {
   }
 
   // Core Decisions
-  void approveOrder(String orderId) {
-    final idx = _orders.indexWhere((o) => o.id == orderId);
-    if (idx != -1) {
-      _orders[idx] = _orders[idx].copyWith(status: "Approved");
+  Future<String?> approveOrder({
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    _isOrderActionLoading = true;
+    _orderActionError = null;
+    notifyListeners();
+
+    try {
+      final t = _token ?? '';
+      if (t.trim().isEmpty) {
+        throw const ApiException('Session token missing. Please login again.');
+      }
+
+      final PurchaseOrderApproveResponse response =
+          await _apiService.approveOrder(
+        token: t,
+        orderNumber: orderNumber,
+        orderCo: orderCo,
+        orderType: orderType,
+      );
+
+      await fetchOrders();
+      return response.successMessage;
+    } on ApiException catch (e) {
+      _orderActionError = e.message;
+      return null;
+    } catch (_) {
+      _orderActionError = 'Unable to approve order.';
+      return null;
+    } finally {
+      _isOrderActionLoading = false;
       notifyListeners();
     }
   }
 
-  void rejectOrder(String orderId) {
-    final idx = _orders.indexWhere((o) => o.id == orderId);
-    if (idx != -1) {
-      _orders[idx] = _orders[idx].copyWith(status: "Rejected");
+  Future<String?> rejectOrder({
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    _isOrderActionLoading = true;
+    _orderActionError = null;
+    notifyListeners();
+
+    try {
+      final t = _token ?? '';
+      if (t.trim().isEmpty) {
+        throw const ApiException('Session token missing. Please login again.');
+      }
+
+      final PurchaseOrderRejectResponse response =
+          await _apiService.rejectOrder(
+        token: t,
+        orderNumber: orderNumber,
+        orderCo: orderCo,
+        orderType: orderType,
+      );
+
+      await fetchOrders();
+      if (response.rejected.isNotEmpty) {
+        return 'Order is rejected successfully.';
+      }
+      return 'Order rejected.';
+    } on ApiException catch (e) {
+      _orderActionError = e.message;
+      return null;
+    } catch (_) {
+      _orderActionError = 'Unable to reject order.';
+      return null;
+    } finally {
+      _isOrderActionLoading = false;
       notifyListeners();
     }
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/auth_models.dart';
+import '../models/order_action_models.dart';
 import '../models/order_lines_api_models.dart';
 import '../models/orders_api_models.dart';
 import 'api_config.dart';
@@ -88,6 +89,62 @@ class ApprovalsApiService {
     throw ApiException(
       payload['message']?.toString() ??
           'Failed to fetch waiting purchase order line details.',
+    );
+  }
+
+  Future<PurchaseOrderApproveResponse> approveOrder({
+    required String token,
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    final response = await _client.post(
+      Uri.parse(ApiConfig.purchaseOrderApproveUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(<String, dynamic>{
+        'token': token,
+        'deviceName': 'Android',
+        'OrderNumber': orderNumber,
+        'OrderCo': orderCo,
+        'OrTy': orderType,
+      }),
+    );
+
+    final payload = _safeDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return PurchaseOrderApproveResponse.fromJson(payload);
+    }
+
+    throw ApiException(
+      payload['message']?.toString() ?? 'Failed to approve order.',
+    );
+  }
+
+  Future<PurchaseOrderRejectResponse> rejectOrder({
+    required String token,
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    final response = await _client.post(
+      Uri.parse(ApiConfig.purchaseOrderRejectUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(<String, dynamic>{
+        'token': token,
+        'deviceName': 'Android',
+        'OrderNumber': orderNumber,
+        'OrderCo': orderCo,
+        'OrTy': orderType,
+      }),
+    );
+
+    final payload = _safeDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return PurchaseOrderRejectResponse.fromJson(payload);
+    }
+
+    throw ApiException(
+      payload['message']?.toString() ?? 'Failed to reject order.',
     );
   }
 
