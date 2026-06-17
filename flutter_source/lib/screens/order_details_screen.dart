@@ -178,8 +178,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             rightValue: order.responsible,
             bottomBorder: true,
           ),
-          _summaryFullRow('PROJECT ID', order.projectIdFull,
-              bottomBorder: true),
+          // _summaryFullRow('PROJECT ID', order.projectIdFull,
+          //     bottomBorder: true),
           _summaryGridRow(
             leftLabel: 'CO NUMBER',
             leftValue: order.coNumber,
@@ -301,7 +301,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     String label,
     String value, {
     bool rightBorder = false,
-    Color valueColor = Colors.white,
+    Color valueColor = Colors.black,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -449,9 +449,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget _buildWaitingLineCard(WaitingPurchaseOrderLineItem item) {
+  Widget _buildWaitingLineCard(GetWaitingPurchaseOrderLineDetails item) {
     final fmt = NumberFormat('#,##0.00', 'en_US');
-    final amount = fmt.format(item.orderAmount);
+    final amount = fmt.format(item.extendedCost);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -469,7 +469,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Order #${item.orderNumber}',
+                    'Order #${item.line}',
                     style: const TextStyle(
                       color: JLWColors.textDark,
                       fontWeight: FontWeight.w800,
@@ -478,7 +478,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   ),
                 ),
                 Text(
-                  '${item.baseCurr} $amount',
+                  '${item.um} $amount',
                   style: const TextStyle(
                     color: JLWColors.mintAccent,
                     fontWeight: FontWeight.w800,
@@ -488,12 +488,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            _waitingLineRow('OrderCo', item.orderCo),
-            _waitingLineRow('OrTy', item.orderType),
-            _waitingLineRow('Originator', item.originator),
-            _waitingLineRow('Responsible', item.responsible),
-            _waitingLineRow('Supplier', item.supplierName),
-            _waitingLineRow('Request Date', item.requestDate),
+            _waitingLineRow('Item Number', item.itemNumber),
+            _waitingLineRow('Quantity', item.quantity.toString()),
+            _waitingLineRow('Unit Cost', item.unitCost.toString()),
+            _waitingLineRow('Extended Cost', item.extendedCost.toString()),
+            _waitingLineRow('UM', item.um),
+            _waitingLineRow('Description', item.description),
           ],
         ),
       ),
@@ -670,7 +670,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: JLWColors.mintAccent,
-                          foregroundColor: JLWColors.textDark,
+                          foregroundColor: JLWColors.darkBg,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),

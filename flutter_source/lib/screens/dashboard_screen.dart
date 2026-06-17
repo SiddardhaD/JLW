@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jlw_approvals/models/auth_models.dart';
 import 'package:provider/provider.dart';
 import '../constants.dart';
 import '../models/order.dart';
@@ -33,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ApprovalsProvider>(context);
     final orders = provider.filteredOrders;
+    final userData = provider.loginSuccessResponse;
 
     return Scaffold(
       backgroundColor: JLWColors.darkBg,
@@ -62,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Column(
         children: [
-          _buildApproverInfoBar(),
+          _buildApproverInfoBar(userData!),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: TextField(
@@ -124,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         filter,
                         style: TextStyle(
                           color: isSelected
-                              ? JLWColors.textDark
+                              ? JLWColors.darkBg
                               : JLWColors.slateText,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
@@ -203,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildApproverInfoBar() {
+  Widget _buildApproverInfoBar(LoginSuccessResponse userdata) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       decoration: BoxDecoration(
@@ -214,9 +216,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            Expanded(child: _infoCell('APPROVER ID', '1234567')),
+            Expanded(child: _infoCell('APPROVER', userdata.username)),
             Container(width: 1, color: JLWColors.borderColor),
-            Expanded(child: _infoCell('PROJECT', 'M30')),
+            Expanded(child: _infoCell('ENV', userdata.environment)),
           ],
         ),
       ),
@@ -555,7 +557,7 @@ class _OrderCardItem extends StatelessWidget {
         onPressed: onApprove,
         style: ElevatedButton.styleFrom(
           backgroundColor: JLWColors.mintAccent,
-          foregroundColor: JLWColors.textDark,
+          foregroundColor: JLWColors.darkBg,
           elevation: 0,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(

@@ -37,12 +37,12 @@ class ApprovalsProvider extends ChangeNotifier {
   String? get ordersError => _ordersError;
 
   final List<OrderModel> _orders = [];
-  final List<WaitingPurchaseOrderLineItem> _waitingLines = [];
+  final List<GetWaitingPurchaseOrderLineDetails> _waitingLines = [];
 
   bool _isWaitingLinesLoading = false;
   String? _waitingLinesError;
 
-  List<WaitingPurchaseOrderLineItem> get waitingLines => _waitingLines;
+  List<GetWaitingPurchaseOrderLineDetails> get waitingLines => _waitingLines;
   bool get isWaitingLinesLoading => _isWaitingLinesLoading;
   String? get waitingLinesError => _waitingLinesError;
 
