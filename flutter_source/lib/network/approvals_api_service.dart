@@ -39,7 +39,7 @@ class ApprovalsApiService {
     throw ApiException(failure.message);
   }
 
-  Future<OrdersResponse> fetchOrders({String? token}) async {
+  Future<OrdersResponse> fetchOrders({String? token, String? flag}) async {
     final headers = <String, String>{'Content-Type': 'application/json'};
 
     final response = await _client.post(
@@ -48,7 +48,7 @@ class ApprovalsApiService {
       body: jsonEncode(<String, dynamic>{
         'token': token,
         'deviceName': 'Android',
-        'Flag': 'Q'
+        'Flag': flag
       }),
     );
 

@@ -28,7 +28,7 @@ class ApprovalsProvider extends ChangeNotifier {
 
   // Search & Filtering States
   String _searchQuery = '';
-  String _selectedFilter = 'All'; // "All", "High Value", "Today", "Pending"
+  String _selectedFilter = 'Queued';
   bool _isOrdersLoading = false;
   String? _ordersError;
 
@@ -36,6 +36,7 @@ class ApprovalsProvider extends ChangeNotifier {
   String get selectedFilter => _selectedFilter;
   bool get isOrdersLoading => _isOrdersLoading;
   String? get ordersError => _ordersError;
+  List<OrderModel>? get orders => _orders;
 
   final List<OrderModel> _orders = [];
   final List<GetWaitingPurchaseOrderLineDetails> _waitingLines = [];
@@ -123,14 +124,14 @@ class ApprovalsProvider extends ChangeNotifier {
               .contains(_searchQuery.toLowerCase()) ||
           order.originator.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      final matchesFilter = _selectedFilter == 'All' ||
-          (_selectedFilter == 'High Value' &&
-              (order.priority == 'HIGH VALUE' ||
-                  order.orderAmount >= 50000000.0)) ||
-          (_selectedFilter == 'Today' && order.orderDate == '15-05-2024') ||
-          (_selectedFilter == 'Pending' && order.status == 'Awaiting Approval');
+      // final matchesFilter = _selectedFilter == 'All' ||
+      //     (_selectedFilter == 'High Value' &&
+      //         (order.priority == 'HIGH VALUE' ||
+      //             order.orderAmount >= 50000000.0)) ||
+      //     (_selectedFilter == 'Today' && order.orderDate == '15-05-2024') ||
+      //     (_selectedFilter == 'Pending' && order.status == 'Awaiting Approval');
 
-      return matchesQuery && matchesFilter;
+      return matchesQuery;
     }).toList();
   }
 
@@ -201,7 +202,7 @@ class ApprovalsProvider extends ChangeNotifier {
     _isOrderActionLoading = false;
     _orderActionError = null;
     _searchQuery = '';
-    _selectedFilter = 'All';
+    _selectedFilter = 'Queued';
     notifyListeners();
   }
 
@@ -211,7 +212,29 @@ class ApprovalsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.fetchOrders(token: _token);
+      final response = await _apiService.fetchOrders(token: _token, flag: 'Q');
+      _orders
+        ..clear()
+        ..addAll(response.orders.map(OrderModel.fromApi));
+    } on ApiException catch (e) {
+      _orders..clear();
+      _ordersError = e.message;
+    } catch (_) {
+      _orders..clear();
+      _ordersError = 'Unable to load orders.';
+    } finally {
+      _isOrdersLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchOrdersBasedOnFilter(String flag) async {
+    _isOrdersLoading = true;
+    _ordersError = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.fetchOrders(token: _token, flag: flag);
       _orders
         ..clear()
         ..addAll(response.orders.map(OrderModel.fromApi));
@@ -271,6 +294,23 @@ class ApprovalsProvider extends ChangeNotifier {
 
   void selectFilter(String filter) {
     _selectedFilter = filter;
+    switch (filter) {
+      case 'Queued':
+        fetchOrdersBasedOnFilter('Q');
+        break;
+      case 'Waiting Approval':
+        fetchOrdersBasedOnFilter('W');
+        break;
+      case 'Approved':
+        fetchOrdersBasedOnFilter('A');
+        break;
+      case "Rejected":
+        fetchOrdersBasedOnFilter('R');
+        break;
+      case "Failure":
+        fetchOrdersBasedOnFilter('SS');
+        break;
+    }
     notifyListeners();
   }
 

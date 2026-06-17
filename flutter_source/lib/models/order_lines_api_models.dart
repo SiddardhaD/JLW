@@ -32,8 +32,8 @@ class GetWaitingPurchaseOrderLineDetails {
   final int line;
   final String itemNumber;
   final int quantity;
-  final int unitCost;
-  final int extendedCost;
+  final double unitCost;
+  final double extendedCost;
   final String um;
   final String description;
 
@@ -53,8 +53,8 @@ class GetWaitingPurchaseOrderLineDetails {
       line: json['Line'] ?? 0,
       itemNumber: json['ItemNumber'] ?? '',
       quantity: json['QuantityOrdered'] ?? 0,
-      unitCost: json['UnitCost'] ?? 0,
-      extendedCost: json['ExtendedCost'] ?? 0,
+      unitCost: json['UnitCost'].toDouble() ?? 0,
+      extendedCost: json['ExtendedCost'].toDouble() ?? 0.0,
       um: json['UM'] ?? '',
       description: json['Description'] ?? '',
     );

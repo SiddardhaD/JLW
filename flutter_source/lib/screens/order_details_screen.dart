@@ -469,7 +469,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Order #${item.line}',
+                    'Line #${item.line}',
                     style: const TextStyle(
                       color: JLWColors.textDark,
                       fontWeight: FontWeight.w800,

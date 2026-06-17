@@ -62,153 +62,168 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildApproverInfoBar(userData!),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
-              style: const TextStyle(color: JLWColors.textDark, fontSize: 14),
-              onChanged: provider.search,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: JLWColors.inputBg,
-                prefixIcon: const Icon(Icons.search,
-                    color: JLWColors.slateText, size: 20),
-                hintText: 'Search by Order No., Supplier...',
-                hintStyle: const TextStyle(
-                  color: JLWColors.slateText,
-                  fontSize: 13,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: JLWColors.borderColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: JLWColors.borderColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: JLWColors.mintAccent),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 36,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: ['All', 'Today', 'Pending'].map((filter) {
-                final isSelected = provider.selectedFilter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => provider.selectFilter(filter),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? JLWColors.mintAccent
-                            : JLWColors.cardBg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? JLWColors.mintAccent
-                              : JLWColors.borderColor,
-                        ),
-                      ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          color: isSelected
-                              ? JLWColors.darkBg
-                              : JLWColors.slateText,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
+      body: RefreshIndicator(
+          onRefresh: () async {
+            context.read<ApprovalsProvider>().fetchOrders();
+          },
+          child: Column(
+            children: [
+              _buildApproverInfoBar(userData!),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: TextField(
+                  style:
+                      const TextStyle(color: JLWColors.textDark, fontSize: 14),
+                  onChanged: provider.search,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: JLWColors.inputBg,
+                    prefixIcon: const Icon(Icons.search,
+                        color: JLWColors.slateText, size: 20),
+                    hintText: 'Search by Order No., Supplier...',
+                    hintStyle: const TextStyle(
+                      color: JLWColors.slateText,
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: JLWColors.borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: JLWColors.borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: JLWColors.mintAccent),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: provider.isOrdersLoading
-                ? const Center(child: CircularProgressIndicator())
-                : provider.ordersError != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    'Queued',
+                    'Waiting Approval',
+                    'Approved',
+                    "Rejected",
+                    "Failure",
+                  ].map((filter) {
+                    final isSelected = provider.selectedFilter == filter;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () => provider.selectFilter(filter),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? JLWColors.mintAccent
+                                : JLWColors.cardBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? JLWColors.mintAccent
+                                  : JLWColors.borderColor,
+                            ),
+                          ),
                           child: Text(
-                            provider.ordersError!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: JLWColors.buttonReject,
+                            filter,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? JLWColors.darkBg
+                                  : JLWColors.slateText,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                         ),
-                      )
-                    : orders.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.folder_open,
-                                    size: 64, color: JLWColors.slateText),
-                                SizedBox(height: 16),
-                                Text(
-                                  'No orders found',
-                                  style: TextStyle(
-                                    color: JLWColors.textDark,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: provider.isOrdersLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : provider.ordersError != null
+                        ? Center(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                provider.ordersError!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: JLWColors.buttonReject,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Adjust filters or search parameters',
-                                  style: TextStyle(
-                                    color: JLWColors.slateText,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                            itemCount: orders.length,
-                            itemBuilder: (context, index) {
-                              final order = orders[index];
-                              return _OrderCardItem(
-                                order: order,
-                                onTap: () => widget.onOrderSelect(order),
-                                onApprove: () => provider.approveOrder(
-                                  orderNumber: int.tryParse(order.id) ?? 0,
-                                  orderCo: order.coNumber,
-                                  orderType: order.orderType,
+                        : orders.isEmpty
+                            ? const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.folder_open,
+                                        size: 64, color: JLWColors.slateText),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No orders found',
+                                      style: TextStyle(
+                                        color: JLWColors.textDark,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Adjust filters or search parameters',
+                                      style: TextStyle(
+                                        color: JLWColors.slateText,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                onReject: () => provider.rejectOrder(
-                                  orderNumber: int.tryParse(order.id) ?? 0,
-                                  orderCo: order.coNumber,
-                                  orderType: order.orderType,
-                                ),
-                              );
-                            },
-                          ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(widget.onLogout),
+                              )
+                            : ListView.builder(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                itemCount: orders.length,
+                                itemBuilder: (context, index) {
+                                  final order = orders[index];
+                                  return _OrderCardItem(
+                                    order: order,
+                                    onTap: () => widget.onOrderSelect(order),
+                                    onApprove: () => provider.approveOrder(
+                                      orderNumber: int.tryParse(order.id) ?? 0,
+                                      orderCo: order.coNumber,
+                                      orderType: order.orderType,
+                                    ),
+                                    onReject: () => provider.rejectOrder(
+                                      orderNumber: int.tryParse(order.id) ?? 0,
+                                      orderCo: order.coNumber,
+                                      orderType: order.orderType,
+                                    ),
+                                  );
+                                },
+                              ),
+              ),
+              const SizedBox(height: 30)
+            ],
+          )),
     );
   }
 
