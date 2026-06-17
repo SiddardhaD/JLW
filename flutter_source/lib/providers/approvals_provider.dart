@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
+import '../models/order_lines_api_models.dart';
 import '../models/order.dart';
 import '../network/approvals_api_service.dart';
 
@@ -36,6 +37,14 @@ class ApprovalsProvider extends ChangeNotifier {
   String? get ordersError => _ordersError;
 
   final List<OrderModel> _orders = [];
+  final List<WaitingPurchaseOrderLineItem> _waitingLines = [];
+
+  bool _isWaitingLinesLoading = false;
+  String? _waitingLinesError;
+
+  List<WaitingPurchaseOrderLineItem> get waitingLines => _waitingLines;
+  bool get isWaitingLinesLoading => _isWaitingLinesLoading;
+  String? get waitingLinesError => _waitingLinesError;
 
   // Seed Line Items matching mockup table cells exactly
   final List<LineItemModel> _lineItems = [
@@ -182,6 +191,8 @@ class ApprovalsProvider extends ChangeNotifier {
     _loginError = null;
     _ordersError = null;
     _orders.clear();
+    _waitingLinesError = null;
+    _waitingLines.clear();
     _searchQuery = '';
     _selectedFilter = 'All';
     notifyListeners();
@@ -205,6 +216,42 @@ class ApprovalsProvider extends ChangeNotifier {
       _ordersError = 'Unable to load orders.';
     } finally {
       _isOrdersLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchWaitingLinesForOrder({
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    _isWaitingLinesLoading = true;
+    _waitingLinesError = null;
+    _waitingLines.clear();
+    notifyListeners();
+
+    try {
+      final t = _token ?? '';
+      if (t.trim().isEmpty) {
+        throw const ApiException('Session token missing. Please login again.');
+      }
+
+      final response = await _apiService.fetchWaitingPurchaseOrderLineDetails(
+        token: t,
+        orderNumber: orderNumber,
+        orderCo: orderCo,
+        orderType: orderType,
+      );
+
+      _waitingLines
+        ..clear()
+        ..addAll(response.lines);
+    } on ApiException catch (e) {
+      _waitingLinesError = e.message;
+    } catch (_) {
+      _waitingLinesError = 'Unable to load lines.';
+    } finally {
+      _isWaitingLinesLoading = false;
       notifyListeners();
     }
   }

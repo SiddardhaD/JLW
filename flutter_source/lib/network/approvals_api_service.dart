@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/auth_models.dart';
+import '../models/order_lines_api_models.dart';
 import '../models/orders_api_models.dart';
 import 'api_config.dart';
 
@@ -46,7 +47,7 @@ class ApprovalsApiService {
       body: jsonEncode(<String, dynamic>{
         'token': token,
         'deviceName': 'Android',
-        'Flag': 'A'
+        'Flag': 'Q'
       }),
     );
 
@@ -57,6 +58,36 @@ class ApprovalsApiService {
 
     throw ApiException(
       payload['message']?.toString() ?? 'Failed to fetch orders.',
+    );
+  }
+
+  Future<WaitingPurchaseOrderLineDetailsResponse>
+      fetchWaitingPurchaseOrderLineDetails({
+    required String token,
+    required int orderNumber,
+    required String orderCo,
+    required String orderType,
+  }) async {
+    final response = await _client.post(
+      Uri.parse(ApiConfig.waitingPurchaseOrderLineDetailsUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(<String, dynamic>{
+        'token': token,
+        'deviceName': 'Android',
+        'OrderNumber': orderNumber,
+        'OrderCo': orderCo,
+        'OrTy': orderType,
+      }),
+    );
+
+    final payload = _safeDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return WaitingPurchaseOrderLineDetailsResponse.fromJson(payload);
+    }
+
+    throw ApiException(
+      payload['message']?.toString() ??
+          'Failed to fetch waiting purchase order line details.',
     );
   }
 

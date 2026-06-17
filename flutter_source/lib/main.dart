@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'constants.dart';
+import 'models/order.dart';
 import 'providers/approvals_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -52,8 +53,8 @@ class JLWApprovalsApp extends StatelessWidget {
           if (settings.name == '/dashboard') {
             return MaterialPageRoute(
               builder: (context) => DashboardScreen(
-                onOrderSelect: (orderId) {
-                  Navigator.pushNamed(context, '/details', arguments: orderId);
+                onOrderSelect: (OrderModel order) {
+                  Navigator.pushNamed(context, '/details', arguments: order);
                 },
                 onLogout: () {
                   final provider =
@@ -66,10 +67,10 @@ class JLWApprovalsApp extends StatelessWidget {
           }
 
           if (settings.name == '/details') {
-            final orderId = settings.arguments as String;
+            final order = settings.arguments as OrderModel;
             return MaterialPageRoute(
               builder: (context) => OrderDetailsScreen(
-                orderId: orderId,
+                order: order,
                 onBack: () {
                   Navigator.pop(context);
                 },

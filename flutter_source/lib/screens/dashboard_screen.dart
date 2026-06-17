@@ -6,7 +6,7 @@ import '../providers/approvals_provider.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final Function(String) onOrderSelect;
+  final Function(OrderModel) onOrderSelect;
   final VoidCallback onLogout;
 
   const DashboardScreen({
@@ -189,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               final order = orders[index];
                               return _OrderCardItem(
                                 order: order,
-                                onTap: () => widget.onOrderSelect(order.id),
+                                onTap: () => widget.onOrderSelect(order),
                                 onApprove: () =>
                                     provider.approveOrder(order.id),
                                 onReject: () => provider.rejectOrder(order.id),

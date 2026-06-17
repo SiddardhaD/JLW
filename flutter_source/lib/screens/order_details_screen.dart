@@ -1,46 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants.dart';
+import '../models/order_lines_api_models.dart';
 import '../models/order.dart';
 import '../providers/approvals_provider.dart';
-import '../widgets/order_document_section.dart';
 import 'package:intl/intl.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
-  final String orderId;
+class OrderDetailsScreen extends StatefulWidget {
+  final OrderModel order;
   final VoidCallback onBack;
 
   const OrderDetailsScreen({
     super.key,
-    required this.orderId,
+    required this.order,
     required this.onBack,
   });
 
   @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final provider = context.read<ApprovalsProvider>();
+      final orderNumber = int.tryParse(widget.order.id) ?? 0;
+      await provider.fetchWaitingLinesForOrder(
+        orderNumber: orderNumber,
+        orderCo: widget.order.coNumber,
+        orderType: widget.order.orderType,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ApprovalsProvider>(context);
-    final order = provider.getOrderById(orderId);
-    final lineItems = provider.getLineItemsForOrder(orderId);
-
-    if (order == null) {
-      return Scaffold(
-        backgroundColor: JLWColors.darkBg,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: JLWColors.mintAccent),
-            onPressed: onBack,
-          ),
-        ),
-        body: const Center(
-          child: Text(
-            'Order not found',
-            style: TextStyle(color: JLWColors.textDark),
-          ),
-        ),
-      );
-    }
+    final order = widget.order;
+    final lines = provider.waitingLines;
 
     return Scaffold(
       backgroundColor: JLWColors.darkBg,
@@ -50,10 +50,10 @@ class OrderDetailsScreen extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: JLWColors.mintAccent),
-          onPressed: onBack,
+          onPressed: widget.onBack,
         ),
         title: Text(
-          'Order No: $orderId',
+          'Order No: ${order.id}',
           style: const TextStyle(
             color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
@@ -63,7 +63,7 @@ class OrderDetailsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.close, color: JLWColors.slateText),
-            onPressed: onBack,
+            onPressed: widget.onBack,
           ),
         ],
       ),
@@ -79,7 +79,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Line Items',
+                      'Lines Waiting for Approval',
                       style: TextStyle(
                         color: JLWColors.textDark,
                         fontSize: 18,
@@ -99,7 +99,7 @@ class OrderDetailsScreen extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '${lineItems.length} Items',
+                        '${lines.length} Lines',
                         style: const TextStyle(
                           color: JLWColors.mintAccent,
                           fontSize: 11,
@@ -110,11 +110,30 @@ class OrderDetailsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                ...lineItems.map(_buildLineItemCard),
-                OrderDocumentSection(
-                  order: order,
-                  lineItems: lineItems,
-                ),
+                if (provider.isWaitingLinesLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (provider.waitingLinesError != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      provider.waitingLinesError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: JLWColors.buttonReject,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                else if (lines.isEmpty)
+                  const _NoWaitingLinesWidget()
+                else ...[
+                  ...lines.map(_buildWaitingLineCard),
+                ],
               ],
             ),
           ),
@@ -128,8 +147,7 @@ class OrderDetailsScreen extends StatelessWidget {
     final supplierName = order.id == '2323135'
         ? "James O' Malley Global Sourcing Ltd."
         : order.supplierName;
-    final orderDate =
-        order.id == '2323135' ? '10-OCT-2026' : order.orderDate;
+    final orderDate = order.id == '2323135' ? '10-OCT-2026' : order.orderDate;
 
     return Container(
       decoration: BoxDecoration(
@@ -160,7 +178,8 @@ class OrderDetailsScreen extends StatelessWidget {
             rightValue: order.responsible,
             bottomBorder: true,
           ),
-          _summaryFullRow('PROJECT ID', order.projectIdFull, bottomBorder: true),
+          _summaryFullRow('PROJECT ID', order.projectIdFull,
+              bottomBorder: true),
           _summaryGridRow(
             leftLabel: 'CO NUMBER',
             leftValue: order.coNumber,
@@ -195,7 +214,8 @@ class OrderDetailsScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: _summaryCell(leftLabel, leftValue, rightBorder: true)),
+          Expanded(
+              child: _summaryCell(leftLabel, leftValue, rightBorder: true)),
           Expanded(child: _summaryCell(rightLabel, rightValue)),
         ],
       ),
@@ -316,6 +336,8 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
+  // Legacy mock line-item UI (kept temporarily for future real line parsing).
+  // ignore: unused_element
   Widget _buildLineItemCard(LineItemModel item) {
     final fmt = NumberFormat('#,##0', 'en_US');
     final unitCostFormatted = fmt.format(item.unitCost);
@@ -400,7 +422,8 @@ class OrderDetailsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _priceCell('QTY', quantityFormatted, JLWColors.mintAccent),
+                  child: _priceCell(
+                      'QTY', quantityFormatted, JLWColors.mintAccent),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -426,6 +449,91 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildWaitingLineCard(WaitingPurchaseOrderLineItem item) {
+    final fmt = NumberFormat('#,##0.00', 'en_US');
+    final amount = fmt.format(item.orderAmount);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: JLWColors.cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: JLWColors.borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Order #${item.orderNumber}',
+                    style: const TextStyle(
+                      color: JLWColors.textDark,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${item.baseCurr} $amount',
+                  style: const TextStyle(
+                    color: JLWColors.mintAccent,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _waitingLineRow('OrderCo', item.orderCo),
+            _waitingLineRow('OrTy', item.orderType),
+            _waitingLineRow('Originator', item.originator),
+            _waitingLineRow('Responsible', item.responsible),
+            _waitingLineRow('Supplier', item.supplierName),
+            _waitingLineRow('Request Date', item.requestDate),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _waitingLineRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: JLWColors.slateText,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: JLWColors.textDark,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
   Widget _lineItemCell(
     String label,
     String value, {
@@ -469,6 +577,7 @@ class OrderDetailsScreen extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   Widget _priceCell(String heading, String value, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -604,6 +713,7 @@ class OrderDetailsScreen extends StatelessWidget {
     BuildContext context,
     ApprovalsProvider provider,
   ) async {
+    final orderId = widget.order.id;
     final confirmed = await _showConfirmDialog(
       context,
       title: 'Confirm Approval',
@@ -628,6 +738,7 @@ class OrderDetailsScreen extends StatelessWidget {
     BuildContext context,
     ApprovalsProvider provider,
   ) async {
+    final orderId = widget.order.id;
     final confirmed = await _showConfirmDialog(
       context,
       title: 'Confirm Rejection',
@@ -639,7 +750,7 @@ class OrderDetailsScreen extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       provider.rejectOrder(orderId);
       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+        const SnackBar(
           content: Text('Order rejected'),
           backgroundColor: JLWColors.buttonReject,
           behavior: SnackBarBehavior.floating,
@@ -695,9 +806,8 @@ class OrderDetailsScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDestructive
-                  ? JLWColors.buttonReject
-                  : JLWColors.mintAccent,
+              backgroundColor:
+                  isDestructive ? JLWColors.buttonReject : JLWColors.mintAccent,
               foregroundColor:
                   isDestructive ? Colors.white : JLWColors.textDark,
               elevation: 0,
@@ -708,6 +818,47 @@ class OrderDetailsScreen extends StatelessWidget {
             child: Text(
               confirmLabel,
               style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoWaitingLinesWidget extends StatelessWidget {
+  const _NoWaitingLinesWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: JLWColors.cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: JLWColors.borderColor),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.inbox_outlined, color: JLWColors.slateText, size: 42),
+          SizedBox(height: 10),
+          Text(
+            'No Lines are waiting for approval',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JLWColors.textDark,
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'This purchase order has no pending line items.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: JLWColors.slateText,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
             ),
           ),
         ],

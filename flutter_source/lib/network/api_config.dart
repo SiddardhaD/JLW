@@ -6,4 +6,7 @@ class ApiConfig {
   static const String logoutUrl = '$baseUrl/tokenrequest/logout';
   static const String ordersUrl =
       '$baseUrl/v3/orchestrator/ORCH_55_GetPurchaseOrderStatusInquiry';
+
+  static const String waitingPurchaseOrderLineDetailsUrl =
+      '$baseUrl/v3/orchestrator/ORCH_55_GetWaitingPurchaseOrderLineDetails';
 }
