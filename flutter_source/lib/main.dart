@@ -4,6 +4,7 @@ import 'constants.dart';
 import 'models/order.dart';
 import 'providers/approvals_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/flow_selection_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/order_details_screen.dart';
 
@@ -44,7 +45,28 @@ class JLWApprovalsApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => LoginScreen(
                 onLoginSuccess: () {
+                  Navigator.pushReplacementNamed(context, '/flow-selection');
+                },
+              ),
+            );
+          }
+
+          if (settings.name == '/flow-selection') {
+            return MaterialPageRoute(
+              builder: (context) => FlowSelectionScreen(
+                onFlowSelected: (flow) {
+                  Provider.of<ApprovalsProvider>(context, listen: false)
+                      .setFlow(flow);
                   Navigator.pushReplacementNamed(context, '/dashboard');
+                },
+                onLogout: () {
+                  final provider =
+                      Provider.of<ApprovalsProvider>(context, listen: false);
+                  provider.logout();
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/login',
+                    (route) => false,
+                  );
                 },
               ),
             );
@@ -56,11 +78,17 @@ class JLWApprovalsApp extends StatelessWidget {
                 onOrderSelect: (OrderModel order) {
                   Navigator.pushNamed(context, '/details', arguments: order);
                 },
+                onSwitchDashboard: () {
+                  Navigator.pushReplacementNamed(context, '/flow-selection');
+                },
                 onLogout: () {
                   final provider =
                       Provider.of<ApprovalsProvider>(context, listen: false);
                   provider.logout();
-                  Navigator.pushReplacementNamed(context, '/login');
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/login',
+                    (route) => false,
+                  );
                 },
               ),
             );

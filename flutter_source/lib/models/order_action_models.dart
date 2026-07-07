@@ -89,10 +89,10 @@ class PurchaseOrderApproveResponse {
     required this.finalApproval,
   });
 
-  String get successMessage =>
+  String successMessage([String entityLabel = 'Order']) =>
       finalApproval?.message ??
       hierarchical?.message ??
-      'Order is approved successfully.';
+      '$entityLabel is approved successfully.';
 
   factory PurchaseOrderApproveResponse.fromJson(Map<String, dynamic> json) {
     final hasServiceRequest = json.containsKey('ServiceRequest1');

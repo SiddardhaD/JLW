@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:pdfx/pdfx.dart';
 import '../constants.dart';
 import '../models/order_lines_api_models.dart';
 import '../models/order.dart';
+import '../models/responsible_person_models.dart';
 import '../providers/approvals_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -21,19 +24,63 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  PdfController? _pdfController;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final provider = context.read<ApprovalsProvider>();
+      provider.clearPdfState();
+      provider.addListener(_onProviderUpdate);
+
       final orderNumber = int.tryParse(widget.order.id) ?? 0;
-      await provider.fetchWaitingLinesForOrder(
+      provider.fetchWaitingLinesForOrder(
         orderNumber: orderNumber,
         orderCo: widget.order.coNumber,
         orderType: widget.order.orderType,
       );
+      provider.fetchResponsiblePersons(
+        orderNumber: orderNumber,
+        orderCo: widget.order.coNumber,
+        orderType: widget.order.orderType,
+      );
+      provider.fetchAndDownloadPdf(
+        orderNumber: widget.order.id,
+        orderCo: widget.order.coNumber,
+        orderType: widget.order.orderType,
+      );
     });
+  }
+
+  void _onProviderUpdate() {
+    if (!mounted) return;
+    final provider = context.read<ApprovalsProvider>();
+
+    if (provider.isPdfLoading && _pdfController != null) {
+      setState(() {
+        _pdfController!.dispose();
+        _pdfController = null;
+      });
+      return;
+    }
+
+    if (provider.pdfBytes != null && _pdfController == null) {
+      setState(() {
+        _pdfController = PdfController(
+          document: PdfDocument.openData(provider.pdfBytes!),
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    final provider = context.read<ApprovalsProvider>();
+    provider.removeListener(_onProviderUpdate);
+    _pdfController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,7 +100,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           onPressed: widget.onBack,
         ),
         title: Text(
-          'Order No: ${order.id}',
+          '${provider.flow.shortLabel} No: ${order.id}',
           style: const TextStyle(
             color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
@@ -74,6 +121,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               children: [
                 _buildOrderSummaryCard(order),
+                _buildResponsiblePersonsSection(provider),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,7 +162,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
-                      child: CircularProgressIndicator(),
+                      child: CupertinoActivityIndicator(),
                     ),
                   )
                 else if (provider.waitingLinesError != null)
@@ -132,8 +180,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 else if (lines.isEmpty)
                   const _NoWaitingLinesWidget()
                 else ...[
-                  ...lines.map(_buildWaitingLineCard),
+                  ...lines.map((l) => _buildWaitingLineCard(
+                        l,
+                        provider.waitingLinesCurrency.isNotEmpty
+                            ? provider.waitingLinesCurrency
+                            : order.currency,
+                      )),
                 ],
+                _buildPdfSection(provider),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -171,17 +226,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
           ),
           const Divider(color: JLWColors.borderColor, height: 1),
+          _summaryFullRow('ORIGINATOR', order.originator, bottomBorder: true),
           _summaryGridRow(
-            leftLabel: 'ORIGINATOR',
-            leftValue: order.originator,
-            rightLabel: 'RESPONSIBLE PARTY',
-            rightValue: order.responsible,
-            bottomBorder: true,
-          ),
-          // _summaryFullRow('PROJECT ID', order.projectIdFull,
-          //     bottomBorder: true),
-          _summaryGridRow(
-            leftLabel: 'CO NUMBER',
+            leftLabel: 'COMPANY CODE',
             leftValue: order.coNumber,
             rightLabel: 'ORDER DATE',
             rightValue: orderDate,
@@ -226,7 +273,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     String label,
     String value, {
     bool bottomBorder = false,
-    Color valueColor = Colors.white,
+    Color valueColor = Colors.black,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -449,9 +496,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget _buildWaitingLineCard(GetWaitingPurchaseOrderLineDetails item) {
+  Widget _buildWaitingLineCard(
+    GetWaitingPurchaseOrderLineDetails item,
+    String currency,
+  ) {
     final fmt = NumberFormat('#,##0.00', 'en_US');
-    final amount = fmt.format(item.extendedCost);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -478,7 +527,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   ),
                 ),
                 Text(
-                  '${item.um} $amount',
+                  '${fmt.format(item.extendedCost)} $currency',
                   style: const TextStyle(
                     color: JLWColors.mintAccent,
                     fontWeight: FontWeight.w800,
@@ -489,10 +538,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
             const SizedBox(height: 10),
             _waitingLineRow('Item Number', item.itemNumber),
-            _waitingLineRow('Quantity', item.quantity.toString()),
-            _waitingLineRow('Unit Cost', item.unitCost.toString()),
-            _waitingLineRow('Extended Cost', item.extendedCost.toString()),
-            _waitingLineRow('UM', item.um),
+            _waitingLineRow('Quantity', '${item.quantity} ${item.um}'),
+            _waitingLineRow(
+                'Unit Cost', '${fmt.format(item.unitCost)} $currency'),
+            _waitingLineRow(
+                'Extended Cost', '${fmt.format(item.extendedCost)} $currency'),
             _waitingLineRow('Description', item.description),
           ],
         ),
@@ -613,6 +663,262 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
+  Widget _buildResponsiblePersonsSection(ApprovalsProvider provider) {
+    final role = provider.loginSuccessResponse?.role ?? '';
+    if (role.trim() != '*ALL') return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        Container(
+          decoration: BoxDecoration(
+            color: JLWColors.cardBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: JLWColors.borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: Text(
+                  'RESPONSIBLE PERSONS',
+                  style: TextStyle(
+                    color: JLWColors.mintAccent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              const Divider(color: JLWColors.borderColor, height: 1),
+              if (provider.isResponsiblePersonsLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CupertinoActivityIndicator()),
+                )
+              else if (provider.responsiblePersonsError != null)
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Text(
+                    provider.responsiblePersonsError!,
+                    style: const TextStyle(
+                      color: JLWColors.buttonReject,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else if (provider.responsiblePersons.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Text(
+                    'No responsible persons found.',
+                    style: TextStyle(color: JLWColors.slateText, fontSize: 12),
+                  ),
+                )
+              else
+                ...provider.responsiblePersons.asMap().entries.map((entry) {
+                  final isLast =
+                      entry.key == provider.responsiblePersons.length - 1;
+                  return _buildResponsiblePersonRow(
+                    entry.value,
+                    bottomBorder: !isLast,
+                  );
+                }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResponsiblePersonRow(
+    ResponsiblePerson person, {
+    bool bottomBorder = false,
+  }) {
+    final Color statusColor;
+    switch (person.status) {
+      case 'Approved':
+        statusColor = JLWColors.mintAccent;
+        break;
+      case 'Rejected':
+        statusColor = JLWColors.buttonReject;
+        break;
+      case 'Bypassed':
+        statusColor = JLWColors.slateText;
+        break;
+      default:
+        statusColor = const Color(0xFFF59E0B);
+    }
+
+    final bool hasReleaseInfo =
+        person.releasedDate != null && person.releasedDate!.isNotEmpty;
+    final String timeLabel =
+        person.releasedTime > 0 ? _formatTime(person.releasedTime) : '';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        border: bottomBorder
+            ? const Border(bottom: BorderSide(color: JLWColors.borderColor))
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  person.personResponsible,
+                  style: const TextStyle(
+                    color: JLWColors.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (hasReleaseInfo) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    timeLabel.isNotEmpty
+                        ? '${person.releasedDate}  $timeLabel'
+                        : person.releasedDate!,
+                    style: const TextStyle(
+                      color: JLWColors.slateText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              person.status,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(int time) {
+    final s = time.toString().padLeft(6, '0');
+    return '${s.substring(0, 2)}:${s.substring(2, 4)}:${s.substring(4, 6)}';
+  }
+
+  Widget _buildPdfSection(ApprovalsProvider provider) {
+    if (!provider.isPdfLoading && _pdfController == null) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        const Text(
+          'Order Document',
+          style: TextStyle(
+            color: JLWColors.textDark,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: JLWColors.cardBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: JLWColors.borderColor),
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: _buildPdfContent(provider),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPdfContent(ApprovalsProvider provider) {
+    if (provider.isPdfLoading) {
+      return const SizedBox(
+        height: 120,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoActivityIndicator(),
+              SizedBox(height: 12),
+              Text(
+                'Loading document...',
+                style: TextStyle(color: JLWColors.slateText, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_pdfController != null) {
+      return SizedBox(
+        height: 480,
+        child: PdfView(
+          controller: _pdfController!,
+          scrollDirection: Axis.vertical,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 120,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.picture_as_pdf_outlined,
+              color: JLWColors.slateText,
+              size: 36,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              provider.pdfError ?? 'No document available for this order.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: JLWColors.slateText,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDecisionTray(
     BuildContext context,
     OrderModel order,
@@ -626,7 +932,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: SafeArea(
         top: false,
-        child: order.status == 'Awaiting Approval'
+        child: order.status == 'Awaiting Approval' &&
+                !provider.isWaitingLinesLoading &&
+                provider.waitingLines.isNotEmpty
             ? Row(
                 children: [
                   Expanded(
@@ -647,12 +955,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    JLWColors.buttonReject,
-                                  ),
-                                ),
+                                child: CupertinoActivityIndicator(),
                               )
                             : const Text(
                                 'REJECT ORDER',
@@ -678,12 +981,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
+                                child: CupertinoActivityIndicator(),
                               )
                             : const Icon(Icons.check_circle_outline, size: 20),
                         label: Text(
@@ -742,11 +1040,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     ApprovalsProvider provider,
   ) async {
     final orderId = widget.order.id;
+    final flowLabel = provider.flow.shortLabel;
     final confirmed = await _showConfirmDialog(
       context,
-      title: 'Confirm Approval',
+      title: 'Confirm $flowLabel Approval',
       message:
-          'Are you sure you want to approve Order #$orderId? This action cannot be undone.',
+          'Are you sure you want to approve $flowLabel #$orderId? This action cannot be undone.',
       confirmLabel: 'Approve',
       isDestructive: false,
     );
@@ -784,11 +1083,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     ApprovalsProvider provider,
   ) async {
     final orderId = widget.order.id;
+    final flowLabel = provider.flow.shortLabel;
     final confirmed = await _showConfirmDialog(
       context,
-      title: 'Confirm Rejection',
+      title: 'Confirm $flowLabel Rejection',
       message:
-          'Are you sure you want to reject Order #$orderId? This action cannot be undone.',
+          'Are you sure you want to reject $flowLabel #$orderId? This action cannot be undone.',
       confirmLabel: 'Reject',
       isDestructive: true,
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jlw_approvals/models/auth_models.dart';
 import 'package:provider/provider.dart';
 import '../constants.dart';
@@ -9,11 +10,13 @@ import 'package:intl/intl.dart';
 class DashboardScreen extends StatefulWidget {
   final Function(OrderModel) onOrderSelect;
   final VoidCallback onLogout;
+  final VoidCallback onSwitchDashboard;
 
   const DashboardScreen({
     super.key,
     required this.onOrderSelect,
     required this.onLogout,
+    required this.onSwitchDashboard,
   });
 
   @override
@@ -21,13 +24,72 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  ApprovalsProvider? _provider;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<ApprovalsProvider>().fetchOrders();
+      _provider = context.read<ApprovalsProvider>();
+      _provider!.addListener(_onProviderChange);
+      _provider!.fetchOrdersBasedOnFilter('Q');
     });
+  }
+
+  @override
+  void dispose() {
+    _provider?.removeListener(_onProviderChange);
+    super.dispose();
+  }
+
+  void _onProviderChange() {
+    if (!mounted) return;
+    if (_provider?.isSessionExpired == true) {
+      _provider?.removeListener(_onProviderChange);
+      _showSessionExpiredDialog();
+    }
+  }
+
+  Future<void> _showSessionExpiredDialog() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: JLWColors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: JLWColors.borderColor),
+        ),
+        title: const Text(
+          'Session Expired',
+          style: TextStyle(
+            color: JLWColors.textDark,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          'Your session has expired. Please login again to continue.',
+          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JLWColors.mintAccent,
+              foregroundColor: JLWColors.darkBg,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Login Again', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (mounted) widget.onLogout();
   }
 
   @override
@@ -36,19 +98,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final orders = provider.filteredOrders;
     final userData = provider.loginSuccessResponse;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _showExitDialog(context);
+      },
+      child: Scaffold(
       backgroundColor: JLWColors.darkBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: JLWColors.mintAccent),
-          onPressed: () {},
-        ),
-        title: const Text(
-          'Orders Awaiting Approval',
-          style: TextStyle(
+        leading: const SizedBox(),
+        title: Text(
+          '${provider.flow.shortLabel} Orders Awaiting Approval',
+          style: const TextStyle(
             color: JLWColors.textDark,
             fontWeight: FontWeight.w700,
             fontSize: 17,
@@ -56,15 +121,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: JLWColors.mintAccent),
-            tooltip: 'Close',
-            onPressed: widget.onLogout,
+            icon: const Icon(Icons.swap_horiz, color: JLWColors.slateText),
+            tooltip: 'Switch Dashboard',
+            onPressed: widget.onSwitchDashboard,
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app, color: JLWColors.slateText),
+            tooltip: 'Logout',
+            onPressed: () => _confirmLogout(context, provider),
           ),
         ],
       ),
       body: RefreshIndicator(
           onRefresh: () async {
-            context.read<ApprovalsProvider>().fetchOrders();
+            context.read<ApprovalsProvider>().fetchOrdersBasedOnFilter('Q');
           },
           child: Column(
             children: [
@@ -104,54 +174,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 36,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    'Queued',
-                    'Waiting Approval',
-                    'Approved',
-                    "Rejected",
-                    "Failure",
-                  ].map((filter) {
-                    final isSelected = provider.selectedFilter == filter;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: GestureDetector(
-                        onTap: () => provider.selectFilter(filter),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? JLWColors.mintAccent
-                                : JLWColors.cardBg,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? JLWColors.mintAccent
-                                  : JLWColors.borderColor,
-                            ),
-                          ),
-                          child: Text(
-                            filter,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? JLWColors.darkBg
-                                  : JLWColors.slateText,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 8),
+              if (userData.role.trim() == '*ALL') ...[
+                // SizedBox(
+                //   height: 36,
+                //   child: ListView(
+                //     scrollDirection: Axis.horizontal,
+                //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                //     children: [
+                //       'Queued',
+                //       'Waiting Approval',
+                //       'Approved',
+                //       'Rejected',
+                //       'Failure',
+                //     ].map((filter) {
+                //       final isSelected = provider.selectedFilter == filter;
+                //       return Padding(
+                //         padding: const EdgeInsets.only(right: 8),
+                //         child: GestureDetector(
+                //           onTap: () => provider.selectFilter(filter),
+                //           child: Container(
+                //             padding: const EdgeInsets.symmetric(horizontal: 16),
+                //             alignment: Alignment.center,
+                //             decoration: BoxDecoration(
+                //               color: isSelected
+                //                   ? JLWColors.mintAccent
+                //                   : JLWColors.cardBg,
+                //               borderRadius: BorderRadius.circular(20),
+                //               border: Border.all(
+                //                 color: isSelected
+                //                     ? JLWColors.mintAccent
+                //                     : JLWColors.borderColor,
+                //               ),
+                //             ),
+                //             child: Text(
+                //               filter,
+                //               style: TextStyle(
+                //                 color: isSelected
+                //                     ? JLWColors.darkBg
+                //                     : JLWColors.slateText,
+                //                 fontWeight: FontWeight.w600,
+                //                 fontSize: 12,
+                //               ),
+                //             ),
+                //           ),
+                //         ),
+                //       );
+                //     }).toList(),
+                //   ),
+                // ),
+                const SizedBox(height: 8),
+              ],
               Expanded(
                 child: provider.isOrdersLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -207,16 +279,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   return _OrderCardItem(
                                     order: order,
                                     onTap: () => widget.onOrderSelect(order),
-                                    onApprove: () => provider.approveOrder(
-                                      orderNumber: int.tryParse(order.id) ?? 0,
-                                      orderCo: order.coNumber,
-                                      orderType: order.orderType,
-                                    ),
-                                    onReject: () => provider.rejectOrder(
-                                      orderNumber: int.tryParse(order.id) ?? 0,
-                                      orderCo: order.coNumber,
-                                      orderType: order.orderType,
-                                    ),
                                   );
                                 },
                               ),
@@ -224,7 +286,121 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 30)
             ],
           )),
+      ),
     );
+  }
+
+  Future<void> _showExitDialog(BuildContext context) async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: JLWColors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: JLWColors.borderColor),
+        ),
+        title: const Text(
+          'Exit App',
+          style: TextStyle(
+            color: JLWColors.textDark,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to exit?',
+          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: JLWColors.slateText, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JLWColors.buttonReject,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Exit', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (shouldExit == true) SystemNavigator.pop();
+  }
+
+  Future<void> _confirmLogout(
+    BuildContext context,
+    ApprovalsProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: JLWColors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: JLWColors.borderColor),
+        ),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: JLWColors.textDark,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            color: JLWColors.slateText,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: JLWColors.slateText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JLWColors.buttonReject,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Logout',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await provider.logoutWithApi();
+      if (context.mounted) widget.onLogout();
+    }
   }
 
   Widget _buildApproverInfoBar(LoginSuccessResponse userdata) {
@@ -353,22 +529,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 class _OrderCardItem extends StatelessWidget {
   final OrderModel order;
   final VoidCallback onTap;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
 
   const _OrderCardItem({
     required this.order,
     required this.onTap,
-    required this.onApprove,
-    required this.onReject,
   });
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##0', 'en_US');
     final formattedAmount = fmt.format(order.orderAmount);
-    final isPending = order.status == 'Awaiting Approval';
-    final showBothButtons = isPending && order.priority == 'HIGH VALUE';
 
     return GestureDetector(
       onTap: onTap,
@@ -482,17 +652,8 @@ class _OrderCardItem extends StatelessWidget {
                       JLWColors.buttonReject,
                       Icons.cancel_outlined,
                     )
-                  else if (showBothButtons)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _rejectButton(),
-                        const SizedBox(width: 8),
-                        _approveButton(width: 100),
-                      ],
-                    )
                   else
-                    _approveButton(width: 120),
+                    _viewOrderButton(),
                 ],
               ),
             ),
@@ -571,12 +732,12 @@ class _OrderCardItem extends StatelessWidget {
     );
   }
 
-  Widget _approveButton({required double width}) {
+  Widget _viewOrderButton() {
     return SizedBox(
-      width: width,
+      width: 120,
       height: 36,
       child: ElevatedButton(
-        onPressed: onApprove,
+        onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: JLWColors.mintAccent,
           foregroundColor: JLWColors.darkBg,
@@ -587,36 +748,10 @@ class _OrderCardItem extends StatelessWidget {
           ),
         ),
         child: const Text(
-          'APPROVE',
+          'VIEW ORDER',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _rejectButton() {
-    return SizedBox(
-      width: 90,
-      height: 36,
-      child: OutlinedButton(
-        onPressed: onReject,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.white54),
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        child: const Text(
-          'REJECT',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
           ),
         ),

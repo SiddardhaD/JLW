@@ -1,11 +1,13 @@
 class WaitingPurchaseOrderLineDetailsResponse {
   final bool approval;
   final String? message;
+  final String currencyCode;
   final List<GetWaitingPurchaseOrderLineDetails> lines;
 
   const WaitingPurchaseOrderLineDetailsResponse({
     required this.approval,
     required this.message,
+    required this.currencyCode,
     required this.lines,
   });
 
@@ -22,7 +24,8 @@ class WaitingPurchaseOrderLineDetailsResponse {
 
     return WaitingPurchaseOrderLineDetailsResponse(
       approval: json['Approval'] == true,
-      message: json['message']?.toString(),
+      message: (json['Message'] ?? json['message'])?.toString(),
+      currencyCode: (json['CurrencyCode'] ?? '').toString(),
       lines: list,
     );
   }

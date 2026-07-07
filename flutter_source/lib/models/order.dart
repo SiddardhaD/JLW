@@ -51,16 +51,17 @@ class OrderModel {
   }
 
   factory OrderModel.fromApi(OrderListItemResponse item) {
+    final currency = item.currencyCode.isNotEmpty ? item.currencyCode : item.baseCurr;
     return OrderModel(
       id: item.orderNumber.toString(),
       originator: item.originator,
-      responsible: 'Pending',
+      responsible: item.responsible,
       project: item.orderCo,
       orderType: item.orderType,
       orderDate: item.requestDate,
       supplierName: item.supplierName,
       orderAmount: item.orderAmount,
-      currency: item.baseCurr,
+      currency: currency,
       priority: item.orderAmount >= 500000 ? 'HIGH VALUE' : 'ROUTINE',
       status: 'Awaiting Approval',
       coNumber: item.orderCo,
