@@ -49,7 +49,8 @@ class _FlowSelectionScreenState extends State<FlowSelectionScreen> {
               style: TextButton.styleFrom(
                 backgroundColor: JLWColors.buttonReject,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -125,7 +126,8 @@ class _FlowSelectionScreenState extends State<FlowSelectionScreen> {
         ),
         content: const Text(
           'Are you sure you want to logout?',
-          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+          style:
+              TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -133,7 +135,8 @@ class _FlowSelectionScreenState extends State<FlowSelectionScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: JLWColors.slateText, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: JLWColors.slateText, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -142,9 +145,11 @@ class _FlowSelectionScreenState extends State<FlowSelectionScreen> {
               backgroundColor: JLWColors.buttonReject,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Logout',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),

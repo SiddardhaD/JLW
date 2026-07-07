@@ -96,14 +96,16 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         setState(() {
           _biometricAttempting = false;
-          _biometricError = 'Authentication cancelled. Try again or sign in with password.';
+          _biometricError =
+              'Authentication cancelled. Try again or sign in with password.';
         });
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _biometricAttempting = false;
-        _biometricError = 'Biometric authentication failed. Please sign in with password.';
+        _biometricError =
+            'Biometric authentication failed. Please sign in with password.';
       });
     }
   }
@@ -158,16 +160,19 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           title: const Text(
             'Enable biometric sign-in?',
-            style: TextStyle(color: JLWColors.textDark, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: JLWColors.textDark, fontWeight: FontWeight.w700),
           ),
           content: const Text(
             'Use Face ID, Touch ID, or your device biometrics to sign in faster next time.',
-            style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+            style: TextStyle(
+                color: JLWColors.slateText, fontSize: 14, height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Not now', style: TextStyle(color: JLWColors.slateText)),
+              child: const Text('Not now',
+                  style: TextStyle(color: JLWColors.slateText)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -175,9 +180,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: JLWColors.mintAccent,
                 foregroundColor: JLWColors.darkBg,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Enable', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text('Enable',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -187,10 +194,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'Confirm biometrics to enable fast sign-in',
-        options: const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
+        options:
+            const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
       );
       if (authenticated) {
-        await provider.enableBiometricLogin(username: username, password: password);
+        await provider.enableBiometricLogin(
+            username: username, password: password);
       }
     } catch (_) {
       // Enrollment is best-effort; login has already succeeded regardless.
@@ -213,7 +222,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: _checkingSession
               ? _buildLoadingView()
               : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -281,7 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.person_outline, color: JLWColors.mintAccent, size: 20),
+                const Icon(Icons.person_outline,
+                    color: JLWColors.mintAccent, size: 20),
                 const SizedBox(width: 12),
                 Text(
                   _savedUsername,
@@ -300,14 +311,16 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: JLWColors.buttonReject.withValues(alpha:0.12),
+                color: JLWColors.buttonReject.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: JLWColors.buttonReject.withValues(alpha:0.4)),
+                border: Border.all(
+                    color: JLWColors.buttonReject.withValues(alpha: 0.4)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.error_outline, color: JLWColors.buttonReject, size: 18),
+                  const Icon(Icons.error_outline,
+                      color: JLWColors.buttonReject, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -331,7 +344,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: JLWColors.mintAccent,
                 foregroundColor: JLWColors.darkBg,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               icon: _biometricAttempting
                   ? const SizedBox(
@@ -339,7 +353,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.2,
-                        valueColor: AlwaysStoppedAnimation<Color>(JLWColors.darkBg),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(JLWColors.darkBg),
                       ),
                     )
                   : const Icon(Icons.fingerprint, size: 26),
@@ -390,7 +405,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         content: const Text(
           'Are you sure you want to exit?',
-          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+          style:
+              TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -398,7 +414,8 @@ class _LoginScreenState extends State<LoginScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: JLWColors.slateText, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: JLWColors.slateText, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -407,9 +424,11 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: JLWColors.buttonReject,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Exit', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Exit',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -454,7 +473,8 @@ class _LoginScreenState extends State<LoginScreen> {
           if (_hasSavedSession) ...[
             TextButton.icon(
               onPressed: () => setState(() => _showNormalLogin = false),
-              icon: const Icon(Icons.arrow_back, size: 16, color: JLWColors.slateText),
+              icon: const Icon(Icons.arrow_back,
+                  size: 16, color: JLWColors.slateText),
               label: const Text(
                 'Back to biometric login',
                 style: TextStyle(
@@ -494,10 +514,10 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: JLWColors.buttonReject.withValues(alpha:0.12),
+                color: JLWColors.buttonReject.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: JLWColors.buttonReject.withValues(alpha:0.4),
+                  color: JLWColors.buttonReject.withValues(alpha: 0.4),
                 ),
               ),
               child: Row(
@@ -571,6 +591,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
+                        color: Colors.white,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -610,7 +631,7 @@ class _LoginScreenState extends State<LoginScreen> {
         fillColor: JLWColors.inputBg,
         hintText: hint,
         hintStyle: _serif.copyWith(
-          color: JLWColors.slateText.withValues(alpha:0.8),
+          color: JLWColors.slateText.withValues(alpha: 0.8),
           fontSize: 14,
         ),
         prefixIcon: Icon(icon, color: JLWColors.slateText, size: 20),
@@ -665,7 +686,7 @@ class _LoginScreenState extends State<LoginScreen> {
           color: JLWColors.slateText,
           fontSize: 11,
           decoration: TextDecoration.underline,
-          decorationColor: JLWColors.slateText.withValues(alpha:0.5),
+          decorationColor: JLWColors.slateText.withValues(alpha: 0.5),
         ),
       ),
     );

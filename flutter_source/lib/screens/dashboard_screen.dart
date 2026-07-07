@@ -72,7 +72,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         content: const Text(
           'Your session has expired. Please login again to continue.',
-          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+          style:
+              TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -82,9 +83,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: JLWColors.mintAccent,
               foregroundColor: JLWColors.darkBg,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Login Again', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Login Again',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -105,199 +108,203 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showExitDialog(context);
       },
       child: Scaffold(
-      backgroundColor: JLWColors.darkBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: const SizedBox(),
-        title: Text(
-          '${provider.flow.shortLabel} Orders Awaiting Approval',
-          style: const TextStyle(
-            color: JLWColors.textDark,
-            fontWeight: FontWeight.w700,
-            fontSize: 17,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.home, color: JLWColors.slateText),
-            tooltip: 'Switch Dashboard',
-            onPressed: widget.onSwitchDashboard,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: TextButton(
-              onPressed: () => _confirmLogout(context, provider),
-              style: TextButton.styleFrom(
-                backgroundColor: JLWColors.buttonReject,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Logout',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
+        backgroundColor: JLWColors.darkBg,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          leading: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: IconButton(
+                icon:
+                    const Icon(CupertinoIcons.home, color: JLWColors.slateText),
+                tooltip: 'Switch Dashboard',
+                onPressed: widget.onSwitchDashboard,
+              )),
+          title: Text(
+            '${provider.flow.shortLabel} Orders Awaiting Approval',
+            style: const TextStyle(
+              color: JLWColors.textDark,
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
             ),
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-          onRefresh: () async {
-            context.read<ApprovalsProvider>().fetchOrdersBasedOnFilter('Q');
-          },
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: TextField(
-                  style:
-                      const TextStyle(color: JLWColors.textDark, fontSize: 14),
-                  onChanged: provider.search,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: JLWColors.inputBg,
-                    prefixIcon: const Icon(Icons.search,
-                        color: JLWColors.slateText, size: 20),
-                    hintText: 'Search by Order No., Supplier...',
-                    hintStyle: const TextStyle(
-                      color: JLWColors.slateText,
-                      fontSize: 13,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: JLWColors.borderColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          const BorderSide(color: JLWColors.borderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: JLWColors.mintAccent),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: () => _confirmLogout(context, provider),
+                style: TextButton.styleFrom(
+                  backgroundColor: JLWColors.buttonReject,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+            onRefresh: () async {
+              context.read<ApprovalsProvider>().fetchOrdersBasedOnFilter('Q');
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: TextField(
+                    style: const TextStyle(
+                        color: JLWColors.textDark, fontSize: 14),
+                    onChanged: provider.search,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: JLWColors.inputBg,
+                      prefixIcon: const Icon(Icons.search,
+                          color: JLWColors.slateText, size: 20),
+                      hintText: 'Search by Order No., Supplier...',
+                      hintStyle: const TextStyle(
+                        color: JLWColors.slateText,
+                        fontSize: 13,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: JLWColors.borderColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: JLWColors.borderColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: JLWColors.mintAccent),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              if (userData?.role.trim() == '*ALL') ...[
-                // SizedBox(
-                //   height: 36,
-                //   child: ListView(
-                //     scrollDirection: Axis.horizontal,
-                //     padding: const EdgeInsets.symmetric(horizontal: 16),
-                //     children: [
-                //       'Queued',
-                //       'Waiting Approval',
-                //       'Approved',
-                //       'Rejected',
-                //       'Failure',
-                //     ].map((filter) {
-                //       final isSelected = provider.selectedFilter == filter;
-                //       return Padding(
-                //         padding: const EdgeInsets.only(right: 8),
-                //         child: GestureDetector(
-                //           onTap: () => provider.selectFilter(filter),
-                //           child: Container(
-                //             padding: const EdgeInsets.symmetric(horizontal: 16),
-                //             alignment: Alignment.center,
-                //             decoration: BoxDecoration(
-                //               color: isSelected
-                //                   ? JLWColors.mintAccent
-                //                   : JLWColors.cardBg,
-                //               borderRadius: BorderRadius.circular(20),
-                //               border: Border.all(
-                //                 color: isSelected
-                //                     ? JLWColors.mintAccent
-                //                     : JLWColors.borderColor,
-                //               ),
-                //             ),
-                //             child: Text(
-                //               filter,
-                //               style: TextStyle(
-                //                 color: isSelected
-                //                     ? JLWColors.darkBg
-                //                     : JLWColors.slateText,
-                //                 fontWeight: FontWeight.w600,
-                //                 fontSize: 12,
-                //               ),
-                //             ),
-                //           ),
-                //         ),
-                //       );
-                //     }).toList(),
-                //   ),
-                // ),
-                const SizedBox(height: 8),
-              ],
-              Expanded(
-                child: provider.isOrdersLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : provider.ordersError != null
-                        ? Center(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 24),
-                              child: Text(
-                                provider.ordersError!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: JLWColors.buttonReject,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          )
-                        : orders.isEmpty
-                            ? const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.folder_open,
-                                        size: 64, color: JLWColors.slateText),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'No orders found',
-                                      style: TextStyle(
-                                        color: JLWColors.textDark,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Adjust filters or search parameters',
-                                      style: TextStyle(
-                                        color: JLWColors.slateText,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
+                const SizedBox(height: 12),
+                if (userData?.role.trim() == '*ALL') ...[
+                  // SizedBox(
+                  //   height: 36,
+                  //   child: ListView(
+                  //     scrollDirection: Axis.horizontal,
+                  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                  //     children: [
+                  //       'Queued',
+                  //       'Waiting Approval',
+                  //       'Approved',
+                  //       'Rejected',
+                  //       'Failure',
+                  //     ].map((filter) {
+                  //       final isSelected = provider.selectedFilter == filter;
+                  //       return Padding(
+                  //         padding: const EdgeInsets.only(right: 8),
+                  //         child: GestureDetector(
+                  //           onTap: () => provider.selectFilter(filter),
+                  //           child: Container(
+                  //             padding: const EdgeInsets.symmetric(horizontal: 16),
+                  //             alignment: Alignment.center,
+                  //             decoration: BoxDecoration(
+                  //               color: isSelected
+                  //                   ? JLWColors.mintAccent
+                  //                   : JLWColors.cardBg,
+                  //               borderRadius: BorderRadius.circular(20),
+                  //               border: Border.all(
+                  //                 color: isSelected
+                  //                     ? JLWColors.mintAccent
+                  //                     : JLWColors.borderColor,
+                  //               ),
+                  //             ),
+                  //             child: Text(
+                  //               filter,
+                  //               style: TextStyle(
+                  //                 color: isSelected
+                  //                     ? JLWColors.darkBg
+                  //                     : JLWColors.slateText,
+                  //                 fontWeight: FontWeight.w600,
+                  //                 fontSize: 12,
+                  //               ),
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       );
+                  //     }).toList(),
+                  //   ),
+                  // ),
+                  const SizedBox(height: 8),
+                ],
+                Expanded(
+                  child: provider.isOrdersLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : provider.ordersError != null
+                          ? Center(
+                              child: Padding(
                                 padding:
-                                    const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                itemCount: orders.length,
-                                itemBuilder: (context, index) {
-                                  final order = orders[index];
-                                  return _OrderCardItem(
-                                    order: order,
-                                    onTap: () => widget.onOrderSelect(order),
-                                  );
-                                },
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  provider.ordersError!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: JLWColors.buttonReject,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
-              ),
-              const SizedBox(height: 30)
-            ],
-          )),
+                            )
+                          : orders.isEmpty
+                              ? const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.folder_open,
+                                          size: 64, color: JLWColors.slateText),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'No orders found',
+                                        style: TextStyle(
+                                          color: JLWColors.textDark,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Adjust filters or search parameters',
+                                        style: TextStyle(
+                                          color: JLWColors.slateText,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                  itemCount: orders.length,
+                                  itemBuilder: (context, index) {
+                                    final order = orders[index];
+                                    return _OrderCardItem(
+                                      order: order,
+                                      onTap: () => widget.onOrderSelect(order),
+                                    );
+                                  },
+                                ),
+                ),
+                const SizedBox(height: 30)
+              ],
+            )),
       ),
     );
   }
@@ -322,7 +329,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         content: const Text(
           'Are you sure you want to exit?',
-          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+          style:
+              TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -330,7 +338,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: JLWColors.slateText, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: JLWColors.slateText, fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -339,9 +348,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: JLWColors.buttonReject,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Exit', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Exit',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),

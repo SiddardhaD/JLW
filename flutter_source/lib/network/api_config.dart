@@ -1,6 +1,6 @@
 class ApiConfig {
-  static const String baseUrl = 'http://140.245.21.194/jderest';
-  // static const String baseUrl = 'https://npaislb.jlwme.com/jderest';
+  // static const String baseUrl = 'http://140.245.21.194/jderest';
+  static const String baseUrl = 'https://npaislb.jlwme.com/jderest';
 
   // Keep login URL maintained in one place.
   static const String loginUrl = '$baseUrl/v2/tokenrequest';

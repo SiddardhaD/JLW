@@ -72,8 +72,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     if (provider.pdfDocuments.isNotEmpty && _pdfControllers.isEmpty) {
       setState(() {
         _pdfControllers = provider.pdfDocuments
-            .map((bytes) =>
-                PdfController(document: PdfDocument.openData(bytes)))
+            .map(
+                (bytes) => PdfController(document: PdfDocument.openData(bytes)))
             .toList();
       });
     }
@@ -219,8 +219,25 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _summaryFullRow('ORIGINATOR', order.originator, bottomBorder: true),
-          _summaryFullRow('ORDER DATE', orderDate, bottomBorder: true),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: JLWColors.borderColor)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _summaryCell(
+                    'ORIGINATOR',
+                    order.originator,
+                    rightBorder: true,
+                  ),
+                ),
+                Expanded(
+                  child: _summaryCell('ORDER DATE', orderDate),
+                ),
+              ],
+            ),
+          ),
           _summaryStatusRow(order.status),
           _summaryFullRow(
             'SUPPLIER NAME',
@@ -698,7 +715,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     padding: EdgeInsets.all(14),
                     child: Text(
                       'No responsible persons found.',
-                      style: TextStyle(color: JLWColors.slateText, fontSize: 12),
+                      style:
+                          TextStyle(color: JLWColors.slateText, fontSize: 12),
                     ),
                   )
                 else
@@ -1264,7 +1282,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   controller: controller,
                   maxLines: 3,
                   onChanged: (_) => setDialogState(() {}),
-                  style: const TextStyle(color: JLWColors.textDark, fontSize: 13),
+                  style:
+                      const TextStyle(color: JLWColors.textDark, fontSize: 13),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: JLWColors.inputBg,
@@ -1276,15 +1295,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     contentPadding: const EdgeInsets.all(10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: JLWColors.borderColor),
+                      borderSide:
+                          const BorderSide(color: JLWColors.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: JLWColors.borderColor),
+                      borderSide:
+                          const BorderSide(color: JLWColors.borderColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: JLWColors.buttonReject),
+                      borderSide:
+                          const BorderSide(color: JLWColors.buttonReject),
                     ),
                   ),
                 ),
