@@ -60,9 +60,6 @@ class JLWApprovalsApp extends StatelessWidget {
                   Navigator.pushReplacementNamed(context, '/dashboard');
                 },
                 onLogout: () {
-                  final provider =
-                      Provider.of<ApprovalsProvider>(context, listen: false);
-                  provider.logout();
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     '/login',
                     (route) => false,
@@ -82,9 +79,6 @@ class JLWApprovalsApp extends StatelessWidget {
                   Navigator.pushReplacementNamed(context, '/flow-selection');
                 },
                 onLogout: () {
-                  final provider =
-                      Provider.of<ApprovalsProvider>(context, listen: false);
-                  provider.logout();
                   Navigator.of(context).pushNamedAndRemoveUntil(
                     '/login',
                     (route) => false,

@@ -75,11 +75,11 @@ class ApprovalsProvider extends ChangeNotifier {
   // PDF States
   bool _isPdfLoading = false;
   String? _pdfError;
-  Uint8List? _pdfBytes;
+  List<Uint8List> _pdfDocuments = [];
 
   bool get isPdfLoading => _isPdfLoading;
   String? get pdfError => _pdfError;
-  Uint8List? get pdfBytes => _pdfBytes;
+  List<Uint8List> get pdfDocuments => _pdfDocuments;
 
   // Responsible Persons States
   List<ResponsiblePerson> _responsiblePersons = [];
@@ -300,7 +300,7 @@ class ApprovalsProvider extends ChangeNotifier {
     _selectedFilter = 'Queued';
     _isPdfLoading = false;
     _pdfError = null;
-    _pdfBytes = null;
+    _pdfDocuments = [];
     _responsiblePersons = [];
     _isResponsiblePersonsLoading = false;
     _responsiblePersonsError = null;
@@ -309,21 +309,28 @@ class ApprovalsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Full explicit logout: clears the active session as well as the saved
+  /// username/password and biometric flag, so the next app open shows the
+  /// password login form instead of prompting for biometrics.
   Future<void> logoutWithApi() async {
     if (_token != null) {
       await _apiService.logoutUser(token: _token!);
     }
     await _storage.clearSession();
+    await _storage.clearCredentials();
+    _biometricEnabled = false;
     logout();
   }
 
   void clearPdfState() {
     _isPdfLoading = false;
     _pdfError = null;
-    _pdfBytes = null;
+    _pdfDocuments = [];
     notifyListeners();
   }
 
+  /// Fetches every media object attached to the order and downloads each one
+  /// individually, so all associated documents are shown, not just the first.
   Future<void> fetchAndDownloadPdf({
     required String orderNumber,
     required String orderCo,
@@ -331,7 +338,7 @@ class ApprovalsProvider extends ChangeNotifier {
   }) async {
     _isPdfLoading = true;
     _pdfError = null;
-    _pdfBytes = null;
+    _pdfDocuments = [];
     notifyListeners();
 
     try {
@@ -340,32 +347,38 @@ class ApprovalsProvider extends ChangeNotifier {
         throw const ApiException('Session token missing. Please login again.');
       }
 
-      final sequence = await _apiService.fetchMediaObjectSequence(
+      final sequences = await _apiService.fetchMediaObjectSequences(
         token: t,
         orderNumber: orderNumber,
         orderCo: orderCo,
         orderType: orderType,
       );
 
-      if (sequence == null) {
+      if (sequences.isEmpty) {
         _pdfError = 'No document available for this order.';
         return;
       }
 
-      final bytes = await _apiService.downloadMediaObject(
-        token: t,
-        orderNumber: orderNumber,
-        orderCo: orderCo,
-        orderType: orderType,
-        sequence: sequence.toString(),
-      );
+      final documents = <Uint8List>[];
+      for (final sequence in sequences) {
+        final bytes = await _apiService.downloadMediaObject(
+          token: t,
+          orderNumber: orderNumber,
+          orderCo: orderCo,
+          orderType: orderType,
+          sequence: sequence.toString(),
+        );
+        if (bytes != null && bytes.isNotEmpty) {
+          documents.add(bytes);
+        }
+      }
 
-      if (bytes == null || bytes.isEmpty) {
+      if (documents.isEmpty) {
         _pdfError = 'Failed to download document.';
         return;
       }
 
-      _pdfBytes = bytes;
+      _pdfDocuments = documents;
     } on SessionExpiredException {
       await handleSessionExpired();
     } on ApiException catch (e) {
@@ -576,6 +589,7 @@ class ApprovalsProvider extends ChangeNotifier {
     required int orderNumber,
     required String orderCo,
     required String orderType,
+    required String note,
   }) async {
     _isOrderActionLoading = true;
     _orderActionError = null;
@@ -594,6 +608,7 @@ class ApprovalsProvider extends ChangeNotifier {
         orderCo: orderCo,
         orderType: orderType,
         flow: _flow,
+        note: note,
       );
 
       await fetchOrders();

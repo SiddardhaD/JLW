@@ -7,7 +7,7 @@ import '../providers/approvals_provider.dart';
 /// Lets the user pick which approval dashboard to work in after login.
 /// Both dashboards share the same order/line/document APIs — only the
 /// approve/reject endpoints (and on-screen wording) differ per [ApprovalFlow].
-class FlowSelectionScreen extends StatelessWidget {
+class FlowSelectionScreen extends StatefulWidget {
   final ValueChanged<ApprovalFlow> onFlowSelected;
   final VoidCallback onLogout;
 
@@ -17,6 +17,11 @@ class FlowSelectionScreen extends StatelessWidget {
     required this.onLogout,
   });
 
+  @override
+  State<FlowSelectionScreen> createState() => _FlowSelectionScreenState();
+}
+
+class _FlowSelectionScreenState extends State<FlowSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final userData = context.watch<ApprovalsProvider>().loginSuccessResponse;
@@ -37,10 +42,23 @@ class FlowSelectionScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app, color: JLWColors.slateText),
-            tooltip: 'Logout',
-            onPressed: onLogout,
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: () => _confirmLogout(context),
+              style: TextButton.styleFrom(
+                backgroundColor: JLWColors.buttonReject,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Logout',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            ),
           ),
         ],
       ),
@@ -70,20 +88,72 @@ class FlowSelectionScreen extends StatelessWidget {
                 icon: Icons.assignment_turned_in_outlined,
                 title: 'PO Dashboard',
                 subtitle: 'Purchase Order approvals',
-                onTap: () => onFlowSelected(ApprovalFlow.purchaseOrder),
+                onTap: () => widget.onFlowSelected(ApprovalFlow.purchaseOrder),
               ),
               const SizedBox(height: 16),
               _FlowCard(
                 icon: Icons.fact_check_outlined,
                 title: 'PR Dashboard',
                 subtitle: 'Purchase Requisition approvals',
-                onTap: () => onFlowSelected(ApprovalFlow.purchaseRequisition),
+                onTap: () =>
+                    widget.onFlowSelected(ApprovalFlow.purchaseRequisition),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: JLWColors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: JLWColors.borderColor),
+        ),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: JLWColors.textDark,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: JLWColors.slateText, fontSize: 14, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: JLWColors.slateText, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JLWColors.buttonReject,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<ApprovalsProvider>().logoutWithApi();
+      if (context.mounted) widget.onLogout();
+    }
   }
 }
 

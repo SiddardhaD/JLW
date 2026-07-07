@@ -141,6 +141,7 @@ class ApprovalsApiService {
     required String orderCo,
     required String orderType,
     ApprovalFlow flow = ApprovalFlow.purchaseOrder,
+    String? note,
   }) async {
     final deviceId = await DeviceInfoService.getDeviceId();
     final url = flow == ApprovalFlow.purchaseRequisition
@@ -155,6 +156,7 @@ class ApprovalsApiService {
         'OrderNumber': orderNumber,
         'OrderCo': orderCo,
         'OrTy': orderType,
+        'Note': note ?? '',
       }),
     );
 
@@ -184,7 +186,10 @@ class ApprovalsApiService {
     }
   }
 
-  Future<int?> fetchMediaObjectSequence({
+  /// Returns the sequence number of every media object attached to the order.
+  /// The API reports how many media items exist; each one must be downloaded
+  /// individually via [downloadMediaObject].
+  Future<List<int>> fetchMediaObjectSequences({
     required String token,
     required String orderNumber,
     required String orderCo,
@@ -207,14 +212,16 @@ class ApprovalsApiService {
 
     final payload = _safeDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (payload['mediaObjects'] != null) {
-        final objects = payload['mediaObjects'] as List?;
-        if (objects != null && objects.isNotEmpty) {
-          return objects.first['sequence'] as int?;
-        }
+      final objects = payload['mediaObjects'] as List?;
+      if (objects != null) {
+        return objects
+            .whereType<Map<String, dynamic>>()
+            .map((o) => o['sequence'] as int?)
+            .whereType<int>()
+            .toList();
       }
     }
-    return null;
+    return const [];
   }
 
   Future<Uint8List?> downloadMediaObject({

@@ -1,6 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jlw_approvals/models/auth_models.dart';
 import 'package:provider/provider.dart';
 import '../constants.dart';
 import '../models/order.dart';
@@ -121,14 +121,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.swap_horiz, color: JLWColors.slateText),
+            icon: const Icon(CupertinoIcons.home, color: JLWColors.slateText),
             tooltip: 'Switch Dashboard',
             onPressed: widget.onSwitchDashboard,
           ),
-          IconButton(
-            icon: const Icon(Icons.exit_to_app, color: JLWColors.slateText),
-            tooltip: 'Logout',
-            onPressed: () => _confirmLogout(context, provider),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: () => _confirmLogout(context, provider),
+              style: TextButton.styleFrom(
+                backgroundColor: JLWColors.buttonReject,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Logout',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            ),
           ),
         ],
       ),
@@ -138,7 +151,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           child: Column(
             children: [
-              _buildApproverInfoBar(userData!),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: TextField(
@@ -174,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (userData.role.trim() == '*ALL') ...[
+              if (userData?.role.trim() == '*ALL') ...[
                 // SizedBox(
                 //   height: 36,
                 //   child: ListView(
@@ -401,55 +413,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await provider.logoutWithApi();
       if (context.mounted) widget.onLogout();
     }
-  }
-
-  Widget _buildApproverInfoBar(LoginSuccessResponse userdata) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-      decoration: BoxDecoration(
-        color: JLWColors.cardBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: JLWColors.borderColor),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Expanded(child: _infoCell('APPROVER', userdata.username)),
-            Container(width: 1, color: JLWColors.borderColor),
-            Expanded(child: _infoCell('ENV', userdata.environment)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoCell(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: JLWColors.slateText,
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: JLWColors.mintAccent,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBottomNav(VoidCallback onLogout) {

@@ -24,7 +24,8 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
-  PdfController? _pdfController;
+  List<PdfController> _pdfControllers = [];
+  bool _responsiblePersonsExpanded = false;
 
   @override
   void initState() {
@@ -58,19 +59,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     if (!mounted) return;
     final provider = context.read<ApprovalsProvider>();
 
-    if (provider.isPdfLoading && _pdfController != null) {
+    if (provider.isPdfLoading && _pdfControllers.isNotEmpty) {
       setState(() {
-        _pdfController!.dispose();
-        _pdfController = null;
+        for (final controller in _pdfControllers) {
+          controller.dispose();
+        }
+        _pdfControllers = [];
       });
       return;
     }
 
-    if (provider.pdfBytes != null && _pdfController == null) {
+    if (provider.pdfDocuments.isNotEmpty && _pdfControllers.isEmpty) {
       setState(() {
-        _pdfController = PdfController(
-          document: PdfDocument.openData(provider.pdfBytes!),
-        );
+        _pdfControllers = provider.pdfDocuments
+            .map((bytes) =>
+                PdfController(document: PdfDocument.openData(bytes)))
+            .toList();
       });
     }
   }
@@ -79,7 +83,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   void dispose() {
     final provider = context.read<ApprovalsProvider>();
     provider.removeListener(_onProviderUpdate);
-    _pdfController?.dispose();
+    for (final controller in _pdfControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -213,57 +219,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
-            child: Text(
-              'ORDER SUMMARY',
-              style: TextStyle(
-                color: JLWColors.mintAccent,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
-          const Divider(color: JLWColors.borderColor, height: 1),
           _summaryFullRow('ORIGINATOR', order.originator, bottomBorder: true),
-          _summaryGridRow(
-            leftLabel: 'COMPANY CODE',
-            leftValue: order.coNumber,
-            rightLabel: 'ORDER DATE',
-            rightValue: orderDate,
-            bottomBorder: true,
-          ),
+          _summaryFullRow('ORDER DATE', orderDate, bottomBorder: true),
           _summaryStatusRow(order.status),
           _summaryFullRow(
             'SUPPLIER NAME',
             supplierName,
             valueColor: JLWColors.mintAccent,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryGridRow({
-    required String leftLabel,
-    required String leftValue,
-    required String rightLabel,
-    required String rightValue,
-    bool bottomBorder = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        border: bottomBorder
-            ? const Border(bottom: BorderSide(color: JLWColors.borderColor))
-            : null,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-              child: _summaryCell(leftLabel, leftValue, rightBorder: true)),
-          Expanded(child: _summaryCell(rightLabel, rightValue)),
         ],
       ),
     );
@@ -680,53 +643,74 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(14, 12, 14, 10),
-                child: Text(
-                  'RESPONSIBLE PERSONS',
-                  style: TextStyle(
-                    color: JLWColors.mintAccent,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+              InkWell(
+                onTap: () => setState(
+                  () => _responsiblePersonsExpanded =
+                      !_responsiblePersonsExpanded,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'RESPONSIBLE PERSONS',
+                          style: TextStyle(
+                            color: JLWColors.mintAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _responsiblePersonsExpanded
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        color: JLWColors.mintAccent,
+                        size: 20,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const Divider(color: JLWColors.borderColor, height: 1),
-              if (provider.isResponsiblePersonsLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(child: CupertinoActivityIndicator()),
-                )
-              else if (provider.responsiblePersonsError != null)
-                Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Text(
-                    provider.responsiblePersonsError!,
-                    style: const TextStyle(
-                      color: JLWColors.buttonReject,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+              if (_responsiblePersonsExpanded) ...[
+                const Divider(color: JLWColors.borderColor, height: 1),
+                if (provider.isResponsiblePersonsLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  )
+                else if (provider.responsiblePersonsError != null)
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(
+                      provider.responsiblePersonsError!,
+                      style: const TextStyle(
+                        color: JLWColors.buttonReject,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                )
-              else if (provider.responsiblePersons.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Text(
-                    'No responsible persons found.',
-                    style: TextStyle(color: JLWColors.slateText, fontSize: 12),
-                  ),
-                )
-              else
-                ...provider.responsiblePersons.asMap().entries.map((entry) {
-                  final isLast =
-                      entry.key == provider.responsiblePersons.length - 1;
-                  return _buildResponsiblePersonRow(
-                    entry.value,
-                    bottomBorder: !isLast,
-                  );
-                }),
+                  )
+                else if (provider.responsiblePersons.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(14),
+                    child: Text(
+                      'No responsible persons found.',
+                      style: TextStyle(color: JLWColors.slateText, fontSize: 12),
+                    ),
+                  )
+                else
+                  ...provider.responsiblePersons.asMap().entries.map((entry) {
+                    final isLast =
+                        entry.key == provider.responsiblePersons.length - 1;
+                    return _buildResponsiblePersonRow(
+                      entry.value,
+                      bottomBorder: !isLast,
+                    );
+                  }),
+              ],
             ],
           ),
         ),
@@ -833,87 +817,126 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   Widget _buildPdfSection(ApprovalsProvider provider) {
-    if (!provider.isPdfLoading && _pdfController == null) {
+    if (!provider.isPdfLoading && _pdfControllers.isEmpty) {
       return const SizedBox.shrink();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
-        const Text(
-          'Order Document',
-          style: TextStyle(
+        Text(
+          _pdfControllers.length > 1
+              ? 'Order Documents (${_pdfControllers.length})'
+              : 'Order Document',
+          style: const TextStyle(
             color: JLWColors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: JLWColors.cardBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: JLWColors.borderColor),
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: _buildPdfContent(provider),
-        ),
+        _buildPdfContent(provider),
       ],
     );
   }
 
   Widget _buildPdfContent(ApprovalsProvider provider) {
     if (provider.isPdfLoading) {
-      return const SizedBox(
-        height: 120,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CupertinoActivityIndicator(),
-              SizedBox(height: 12),
-              Text(
-                'Loading document...',
-                style: TextStyle(color: JLWColors.slateText, fontSize: 13),
-              ),
-            ],
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: JLWColors.cardBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: JLWColors.borderColor),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: const SizedBox(
+          height: 120,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CupertinoActivityIndicator(),
+                SizedBox(height: 12),
+                Text(
+                  'Loading document...',
+                  style: TextStyle(color: JLWColors.slateText, fontSize: 13),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
-    if (_pdfController != null) {
-      return SizedBox(
-        height: 480,
-        child: PdfView(
-          controller: _pdfController!,
-          scrollDirection: Axis.vertical,
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 120,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.picture_as_pdf_outlined,
-              color: JLWColors.slateText,
-              size: 36,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              provider.pdfError ?? 'No document available for this order.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: JLWColors.slateText,
-                fontSize: 13,
+    if (_pdfControllers.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < _pdfControllers.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            if (_pdfControllers.length > 1) ...[
+              Text(
+                'Document ${i + 1}',
+                style: const TextStyle(
+                  color: JLWColors.slateText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: JLWColors.cardBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: JLWColors.borderColor),
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                height: 480,
+                child: PdfView(
+                  controller: _pdfControllers[i],
+                  scrollDirection: Axis.vertical,
+                ),
               ),
             ),
           ],
+        ],
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: JLWColors.cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: JLWColors.borderColor),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: SizedBox(
+        height: 120,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.picture_as_pdf_outlined,
+                color: JLWColors.slateText,
+                size: 36,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                provider.pdfError ?? 'No document available for this order.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: JLWColors.slateText,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1084,19 +1107,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   ) async {
     final orderId = widget.order.id;
     final flowLabel = provider.flow.shortLabel;
-    final confirmed = await _showConfirmDialog(
+    final comment = await _showRejectCommentDialog(
       context,
       title: 'Confirm $flowLabel Rejection',
       message:
           'Are you sure you want to reject $flowLabel #$orderId? This action cannot be undone.',
-      confirmLabel: 'Reject',
-      isDestructive: true,
     );
-    if (confirmed == true && context.mounted) {
+    if (comment != null && context.mounted) {
       final message = await provider.rejectOrder(
         orderNumber: int.tryParse(orderId) ?? 0,
         orderCo: widget.order.coNumber,
         orderType: widget.order.orderType,
+        note: comment,
       );
       if (!context.mounted) return;
 
@@ -1183,6 +1205,123 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Shows the rejection confirmation dialog with a mandatory comments field.
+  /// Returns the entered comment, or null if the user cancelled.
+  Future<String?> _showRejectCommentDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final canSubmit = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            backgroundColor: JLWColors.cardBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: JLWColors.borderColor),
+            ),
+            title: Text(
+              title,
+              style: const TextStyle(
+                color: JLWColors.textDark,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: JLWColors.slateText,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'COMMENTS (REQUIRED)',
+                  style: TextStyle(
+                    color: JLWColors.slateText,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  onChanged: (_) => setDialogState(() {}),
+                  style: const TextStyle(color: JLWColors.textDark, fontSize: 13),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: JLWColors.inputBg,
+                    hintText: 'Enter reason for rejection...',
+                    hintStyle: const TextStyle(
+                      color: JLWColors.slateText,
+                      fontSize: 12,
+                    ),
+                    contentPadding: const EdgeInsets.all(10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: JLWColors.borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: JLWColors.borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: JLWColors.buttonReject),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: JLWColors.slateText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: canSubmit
+                    ? () => Navigator.pop(ctx, controller.text.trim())
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: JLWColors.buttonReject,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Reject',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
