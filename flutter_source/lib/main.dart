@@ -7,8 +7,11 @@ import 'screens/login_screen.dart';
 import 'screens/flow_selection_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/order_details_screen.dart';
+import 'services/download_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DownloadService.init();
   runApp(const JLWApprovalsApp());
 }
 

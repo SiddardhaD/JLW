@@ -7,6 +7,7 @@ import '../models/order_lines_api_models.dart';
 import '../models/order.dart';
 import '../models/responsible_person_models.dart';
 import '../providers/approvals_provider.dart';
+import '../services/download_service.dart';
 import 'package:intl/intl.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
@@ -842,20 +843,94 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
-        Text(
-          _pdfControllers.length > 1
-              ? 'Order Documents (${_pdfControllers.length})'
-              : 'Order Document',
-          style: const TextStyle(
-            color: JLWColors.textDark,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _pdfControllers.length > 1
+                  ? 'Order Documents (${_pdfControllers.length})'
+                  : 'Order Document',
+              style: const TextStyle(
+                color: JLWColors.textDark,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (_pdfControllers.length == 1)
+              _downloadIconButton(onTap: () => _downloadPdf(0)),
+          ],
         ),
         const SizedBox(height: 12),
         _buildPdfContent(provider),
       ],
     );
+  }
+
+  Widget _downloadIconButton({required VoidCallback onTap}) {
+    return Material(
+      color: JLWColors.inputBg,
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: JLWColors.borderColor),
+          ),
+          child: const Icon(
+            Icons.download_outlined,
+            size: 18,
+            color: JLWColors.mintAccent,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Saves the downloaded PDF bytes to the device's Downloads folder
+  /// (Android) or Documents directory (iOS), then shows a tappable
+  /// notification that reopens the file.
+  Future<void> _downloadPdf(int index) async {
+    final provider = context.read<ApprovalsProvider>();
+    final documents = provider.pdfDocuments;
+    if (index < 0 || index >= documents.length) return;
+
+    final orderId = widget.order.id;
+    final fileName = documents.length > 1
+        ? 'Order_${orderId}_Document_${index + 1}.pdf'
+        : 'Order_$orderId.pdf';
+
+    try {
+      final savedLocation = await DownloadService.saveFile(
+        fileName: fileName,
+        bytes: documents[index],
+        mimeType: 'application/pdf',
+      );
+      await DownloadService.notifyDownloadComplete(
+        fileName: fileName,
+        savedLocation: savedLocation,
+        mimeType: 'application/pdf',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$fileName saved to Downloads'),
+          backgroundColor: JLWColors.mintAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Download failed. Please try again.'),
+          backgroundColor: JLWColors.buttonReject,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildPdfContent(ApprovalsProvider provider) {
@@ -894,13 +969,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           for (var i = 0; i < _pdfControllers.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
             if (_pdfControllers.length > 1) ...[
-              Text(
-                'Document ${i + 1}',
-                style: const TextStyle(
-                  color: JLWColors.slateText,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Document ${i + 1}',
+                    style: const TextStyle(
+                      color: JLWColors.slateText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  _downloadIconButton(onTap: () => _downloadPdf(i)),
+                ],
               ),
               const SizedBox(height: 6),
             ],

@@ -23,7 +23,8 @@ class ApiException implements Exception {
 }
 
 class SessionExpiredException extends ApiException {
-  const SessionExpiredException() : super('Session expired. Please login again.');
+  const SessionExpiredException()
+      : super('Session expired. Please login again.');
 }
 
 class ApprovalsApiService {
@@ -202,9 +203,8 @@ class ApprovalsApiService {
       body: jsonEncode(<String, dynamic>{
         "token": token,
         "deviceName": deviceId,
-        "Linenumber": "1.000",
         "OrderNumber": orderNumber,
-        "Company": orderCo,
+        "OrderCompany": orderCo,
         "OrderType ": orderType,
         "OrderSuffix ": "000"
       }),
@@ -244,7 +244,6 @@ class ApprovalsApiService {
         "Company": orderCo,
         "OrderType": orderType,
         "OrderSuffix": "000",
-        "LineNo": "1.000",
         "OrderNo": orderNumber,
         "Sequence": sequence,
       }),
