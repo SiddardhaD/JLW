@@ -5,24 +5,82 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "flutter_source",
-            "cwd": "flutter_source",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "flutter_source (profile mode)",
+            "name": "flutter_source (dev)",
             "cwd": "flutter_source",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
         },
         {
-            "name": "flutter_source (release mode)",
+            "name": "flutter_source (dev, profile mode)",
             "cwd": "flutter_source",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "profile",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "flutter_source (dev, release mode)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_dev.dart",
+            "args": ["--flavor", "dev"]
+        },
+        {
+            "name": "flutter_source (staging)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_staging.dart",
+            "args": ["--flavor", "staging"]
+        },
+        {
+            "name": "flutter_source (staging, profile mode)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main_staging.dart",
+            "args": ["--flavor", "staging"]
+        },
+        {
+            "name": "flutter_source (staging, release mode)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_staging.dart",
+            "args": ["--flavor", "staging"]
+        },
+        {
+            "name": "flutter_source (prod)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "flutter_source (prod, profile mode)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
+        },
+        {
+            "name": "flutter_source (prod, release mode)",
+            "cwd": "flutter_source",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main_prod.dart",
+            "args": ["--flavor", "prod"]
         }
     ]
 }
