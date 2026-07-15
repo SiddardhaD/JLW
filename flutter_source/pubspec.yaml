@@ -20,6 +20,8 @@ dependencies:
   pdf: ^3.12.0
   device_info_plus: ^12.4.0
   android_id: ^0.5.1
+  flutter_dotenv: ^6.0.1
+  connectivity_plus: ^7.2.0
 
 dev_dependencies:
   flutter_test:
@@ -30,3 +32,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - .env.dev
+    - .env.staging
+    - .env.prod

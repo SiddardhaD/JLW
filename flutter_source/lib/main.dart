@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'config/flavor_config.dart';
 import 'constants.dart';
 import 'models/order.dart';
 import 'providers/approvals_provider.dart';
@@ -7,8 +9,18 @@ import 'screens/login_screen.dart';
 import 'screens/flow_selection_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/order_details_screen.dart';
+import 'widgets/network_status_overlay.dart';
 
-void main() {
+/// Default entry point (`flutter run` with no `-t`/`--flavor`). Defaults to
+/// dev so IDE "run" buttons keep working; use main_dev/main_staging/main_prod
+/// for explicit flavor builds.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env.dev');
+  FlavorConfig(
+    flavor: Flavor.dev,
+    baseUrl: dotenv.env['BASE_URL']!,
+  );
   runApp(const JLWApprovalsApp());
 }
 
@@ -39,6 +51,9 @@ class JLWApprovalsApp extends StatelessWidget {
             elevation: 0,
           ),
         ),
+        builder: (context, child) {
+          return NetworkStatusOverlay(child: child ?? const SizedBox.shrink());
+        },
         initialRoute: '/login',
         onGenerateRoute: (settings) {
           if (settings.name == '/login') {

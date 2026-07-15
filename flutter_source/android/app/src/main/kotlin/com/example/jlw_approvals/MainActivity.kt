@@ -1,4 +1,4 @@
-package com.example.jlw_approvals
+package com.jlw.approvals
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
